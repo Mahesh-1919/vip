@@ -6,7 +6,7 @@ import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartToo
 const compact = (v: number) => new Intl.NumberFormat("en", { notation: "compact" }).format(v);
 const aed = (v: number) => "AED " + new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(v);
 
-const trendCfg = { invoiced: { label: "Invoiced", color: "var(--primary)" }, open: { label: "Not yet invoiced", color: "#f59e0b" } } satisfies ChartConfig;
+const trendCfg = { invoiced: { label: "Invoiced", color: "var(--primary)" }, open: { label: "Not yet invoiced", color: "#d97706" } } satisfies ChartConfig;
 
 /** Net sales per month, split by invoiced / not yet invoiced. */
 export function SalesTrendChart({ data }: { data: { month: string; invoiced: number; open: number }[] }) {
@@ -41,8 +41,8 @@ export function TopCustomersChart({ data }: { data: { name: string; net: number 
   );
 }
 
-const PAY_COLORS: Record<string, string> = { paid: "#1a6b45", outstanding: "#f59e0b", overdue: "#dc2626" };
-const payCfg = { paid: { label: "Collected", color: "var(--primary)" }, outstanding: { label: "Outstanding", color: "#f59e0b" }, overdue: { label: "Overdue", color: "#dc2626" } } satisfies ChartConfig;
+const PAY_COLORS: Record<string, string> = { paid: "#1a6b45", outstanding: "#d97706", overdue: "#dc2626" };
+const payCfg = { paid: { label: "Collected", color: "var(--primary)" }, outstanding: { label: "Outstanding", color: "#d97706" }, overdue: { label: "Overdue", color: "#dc2626" } } satisfies ChartConfig;
 
 /** How much of the invoiced money is collected, waiting, or late. */
 export function PaymentsChart({ data }: { data: { key: string; label: string; value: number }[] }) {

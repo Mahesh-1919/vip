@@ -3,7 +3,7 @@
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import { ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 
-const config = { imported: { label: "Imported", color: "var(--primary)" }, exported: { label: "Exported", color: "#f59e0b" } } satisfies ChartConfig;
+const config = { imported: { label: "Imported", color: "var(--primary)" }, exported: { label: "Exported", color: "#d97706" } } satisfies ChartConfig;
 
 /** Packages imported vs exported per month. */
 export function FlowChart({ data }: { data: { month: string; imported: number; exported: number }[] }) {

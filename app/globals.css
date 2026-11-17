@@ -9,7 +9,7 @@
   --card: #ffffff;
   --card-foreground: #14201a;
   --muted: #f3f5f2;
-  --muted-foreground: #6b776f;
+  --muted-foreground: #58645c;
   --border: #e6e9e4;
   --primary: #1a6b45;
   --primary-foreground: #ffffff;
@@ -17,7 +17,7 @@
   --destructive: #dc2626;
   --ring: #1a6b45;
   --sidebar: #eef0ec;
-  --sidebar-foreground: #5d6a62;
+  --sidebar-foreground: #4f5c54;
   --sidebar-active: rgba(26, 107, 69, 0.1);
   --success: #15803d; --success-bg: #dcfce7;
   --warning: #b45309; --warning-bg: #fef3c7;
@@ -30,7 +30,7 @@
   --secondary-foreground: #14201a;
   --accent: #e6ece6;
   --accent-foreground: #14201a;
-  --input: #d9ded8;
+  --input: #8a968e;
   --sidebar-primary: #1a6b45;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: rgba(26, 107, 69, 0.1);
@@ -58,7 +58,7 @@
     --secondary-foreground: #e6ece8;
     --accent: #1e2c24;
     --accent-foreground: #e6ece8;
-    --input: #2a3c32;
+    --input: #4a6054;
     --sidebar: #0b110e;
     --sidebar-foreground: #9fb0a6;
     --sidebar-accent: rgba(63, 182, 122, 0.14);
@@ -131,7 +131,8 @@
   :focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
 
   td, th { font-variant-numeric: tabular-nums; }
-  ::placeholder { color: var(--muted-foreground); opacity: 0.75; }
+  ::placeholder { color: var(--muted-foreground); opacity: 1; }
+  button:not(:disabled), [role="button"], summary, label[for], select { cursor: pointer; }
 }
 
 @media (prefers-reduced-motion: reduce) {

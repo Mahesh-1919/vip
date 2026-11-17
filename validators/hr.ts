@@ -13,6 +13,8 @@ const money = z.string().trim().regex(/^\d{1,12}(\.\d{1,2})?$/, "Enter a valid a
 export const EMPLOYEE_STATUSES = ["active", "on_leave", "notice_period", "inactive", "terminated"] as const;
 
 export const employeeSchema = z.object({
+  /** Optional: the register's employee ID. Blank = auto-generated (EMP-0001). */
+  empCode: z.string().trim().max(20).regex(/^[A-Za-z0-9-]*$/, "Letters, digits and hyphen only").transform((v) => v || null).optional(),
   name: z.string().trim().min(2, "Name is required").max(120),
   email: z.string().trim().toLowerCase().max(254).transform((v) => v || null).pipe(z.email().nullable()).optional(),
   phone: optText(30),
@@ -32,7 +34,9 @@ export const employeeSchema = z.object({
     .optional(),
   passportNo: z.string().trim().max(30).optional(),
   emiratesIdExpiry: optDate,
+  passportIssueDate: optDate,
   passportExpiry: optDate,
+  visaIssueDate: optDate,
   visaExpiry: optDate,
   labourCardExpiry: optDate,
   bankName: optText(80),

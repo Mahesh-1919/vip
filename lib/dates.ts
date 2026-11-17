@@ -12,3 +12,17 @@ export function daysUntil(iso: string | null | undefined): number | null {
   if (!iso) return null;
   return Math.round((Date.parse(iso + "T00:00:00Z") - Date.parse(todayISO() + "T00:00:00Z")) / 86_400_000);
 }
+
+const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+/** 15/Apr/2024: the register style used on the employee list. */
+export function formatDateMon(iso: string | null | undefined): string {
+  if (!iso) return "—";
+  const [y, m, d] = iso.slice(0, 10).split("-");
+  return `${d}/${MON[Number(m) - 1]}/${y}`;
+}
+/** 3-Jan-26: the style used in the free-zone bill sheets. */
+export function formatSheetDate(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const [y, m, d] = iso.slice(0, 10).split("-");
+  return `${Number(d)}-${MON[Number(m) - 1]}-${y.slice(2)}`;
+}

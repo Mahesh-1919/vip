@@ -38,18 +38,11 @@ describe("rbac", () => {
   it("HR is limited to HRMS", () => {
     for (const p of perms("hr_manager")) expect(p === "dashboard:view" || p.startsWith("hr:")).toBe(true);
   });
-  it("sales manager is read-only on containers/stock", () => {
-    const s = perms("sales_manager");
-    expect(s.has("inventory:container:read")).toBe(true);
-    expect(s.has("inventory:container:write")).toBe(false);
-    expect(s.has("inventory:stock:adjust")).toBe(false);
+  it("operations manager only touches the free zone register", () => {
+    for (const p of perms("operations_manager")) expect(p === "dashboard:view" || p.startsWith("freezone:")).toBe(true);
+    expect(perms("operations_manager").has("hr:employee:read")).toBe(false);
   });
-  it("accountant sees payroll totals but no per-employee payroll", () => {
-    const a = perms("accountant");
-    expect(a.has("accounting:payroll-summary:read")).toBe(true);
-    expect(a.has("hr:payroll:read")).toBe(false);
-    expect(a.has("hr:employee:read")).toBe(false);
-  });
+  it("HR cannot touch the free zone register", () => expect(perms("hr_manager").has("freezone:entry:read")).toBe(false));
 });
 
 describe("audit redaction", () => {

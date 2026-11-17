@@ -35,6 +35,7 @@ export function EmployeeForm({ action, employee, departments, canSensitive }: {
     <form action={formAction} className="flex flex-col gap-5">
       {employee?.version && <input type="hidden" name="version" value={String(employee.version)} />}
       <Section title="Personal">
+        {!employee && <F name="empCode" label="Employee ID" placeholder="Leave blank to auto-generate" hint="Use the ID from your register, e.g. 20434735." />}
         <F name="name" label="Full name" required />
         <F name="email" label="Email" type="email" />
         <F name="phone" label="Phone" placeholder="+971 5x xxx xxxx" />
@@ -53,8 +54,10 @@ export function EmployeeForm({ action, employee, departments, canSensitive }: {
         <F name="labourCardNo" label="Labour card no." />
         <F name="labourCardExpiry" label="Labour card expiry" type="date" />
         <F name="personCode" label="MOHRE person code" hint="Used in the WPS SIF file" />
-        <F name="visaExpiry" label="Residence visa expiry" type="date" />
+        <F name="visaIssueDate" label="Visa / ID issue date" type="date" />
+        <F name="visaExpiry" label="Visa / ID expiry" type="date" />
         <F name="emiratesIdExpiry" label="Emirates ID expiry" type="date" />
+        <F name="passportIssueDate" label="Passport issue date" type="date" />
         <F name="passportExpiry" label="Passport expiry" type="date" />
         {canSensitive ? (
           <>

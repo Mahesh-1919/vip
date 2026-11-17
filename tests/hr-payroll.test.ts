@@ -9,7 +9,6 @@ import {
 import { encryptField } from "@/lib/crypto";
 import { eachDate, monthRange, weekday } from "@/lib/hr-calendar";
 import { PayslipPdf } from "@/components/payslip-pdf";
-import { purgeSince } from "./purge";
 import * as leave from "@/services/hr/leave";
 import * as payroll from "@/services/hr/payroll";
 
@@ -18,8 +17,6 @@ const Y = 2025, M = 3; // far in the past so no real data collides
 let admin: never, hr: never, empId: string;
 let origSettings: typeof payrollSettings.$inferSelect;
 let touchedEmployees: { id: string; personCode: string | null; routingCode: string | null }[] = [];
-
-const t0 = new Date(Date.now() - 2000);
 
 beforeAll(async () => {
   const [u] = await db.select().from(users).limit(1);
@@ -57,7 +54,6 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await purgeSince(t0);
   await db.transaction(async (tx) => {
     await tx.execute(sql`select set_config('erp.allow_reopen', 'on', true)`);
     const runs = await tx.select({ id: payrollRuns.id }).from(payrollRuns).where(and(eq(payrollRuns.year, Y), eq(payrollRuns.month, M)));

@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import {
   LayoutDashboard, Users, CalendarCheck, Plane, Wallet, FileText, Clock, CalendarDays, Settings, Settings2,
-  Package, Boxes, UserCog, ScrollText, Container, Truck, Contact, Building2, Receipt, ShoppingCart, TrendingUp, BarChart3, ReceiptText, Landmark, BookOpen, Library, ArrowDownToLine, ArrowUpFromLine, FileBarChart, ListTree, ChevronDown, ShieldCheck, LogOut, type LucideIcon,
+  UserCog, ScrollText, Building2, PackagePlus, PackageMinus, ChevronDown, ShieldCheck, LogOut, type LucideIcon,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
@@ -17,10 +17,10 @@ import {
   SidebarMenuItem, SidebarProvider, SidebarRail, SidebarTrigger, useSidebar,
 } from "@/components/ui/sidebar";
 
-const ICONS: Record<string, LucideIcon> = { LayoutDashboard, Users, CalendarCheck, Plane, Wallet, FileText, Clock, CalendarDays, Settings, Settings2, Package, Boxes, UserCog, ScrollText, Container, Truck, Contact, Building2, Receipt, ShoppingCart, TrendingUp, BarChart3, ReceiptText, Landmark, BookOpen, Library, ArrowDownToLine, ArrowUpFromLine, FileBarChart, ListTree };
+const ICONS: Record<string, LucideIcon> = { LayoutDashboard, Users, CalendarCheck, Plane, Wallet, FileText, Clock, CalendarDays, Settings, Settings2, UserCog, ScrollText, Building2, PackagePlus, PackageMinus };
 type Section = { title: string; items: { label: string; href: string; icon: string }[] };
 
-const LABELS: Record<string, string> = { hr: "HR", inventory: "Inventory", admin: "Administration", config: "Settings", new: "New", sif: "SIF" };
+const LABELS: Record<string, string> = { hr: "HR", freezone: "Free Zone", admin: "Administration", config: "Settings", new: "New", sif: "SIF" };
 const isId = (s: string) => /^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(s);
 const pretty = (s: string) => LABELS[s] ?? s.replace(/-/g, " ").replace(/^./, (c) => c.toUpperCase());
 

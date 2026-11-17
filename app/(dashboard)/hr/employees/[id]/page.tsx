@@ -18,6 +18,8 @@ import { deactivate, reactivate, saveEmployee, saveSalary } from "../actions";
 import { EmployeeForm } from "../employee-form";
 import { SalaryForm } from "./salary-form";
 import { DocumentUpload } from "./document-upload";
+import { PhotoUpload } from "./photo-upload";
+import { EmployeeAvatar } from "@/components/employee-avatar";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 
 export const metadata: Metadata = { title: "Employee" };
@@ -45,6 +47,7 @@ export default async function EmployeePage({ params }: PageProps<"/hr/employees/
     <div className="max-w-3xl flex flex-col gap-6">
       <div>
         <Link href="/hr/employees" className="text-sm text-primary hover:underline">← Employees</Link>
+        <div className="mt-2 flex flex-wrap items-center gap-4"><EmployeeAvatar id={emp.id} name={emp.name} hasPhoto={!!emp.photoKey} className="size-20" />{canWrite && <PhotoUpload employeeId={emp.id} />}</div>
         <h1 className="mt-1 text-2xl font-semibold">{emp.name} <span className="text-base font-normal text-muted-foreground font-mono">{emp.empCode}</span></h1>
         <p className="text-sm text-muted-foreground capitalize">{emp.status.replace("_", " ")} · joined {formatDate(emp.joinDate)}
           {days(emp.visaExpiry) && ` · visa ${days(emp.visaExpiry)}`}{days(emp.emiratesIdExpiry) && ` · Emirates ID ${days(emp.emiratesIdExpiry)}`}

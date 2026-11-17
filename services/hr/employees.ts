@@ -15,11 +15,12 @@ import type { EmployeeInput } from "@/validators/hr";
 type Meta = { ip: string | null; userAgent: string | null };
 const actorFields = (u: CurrentUser, m: Meta) => ({ userId: u.id, userEmail: u.email, ...m });
 
-export const PAGE_SIZE = 20;
+export const PAGE_SIZES = [10, 25, 50, 100] as const;
 const SORTS = { name: employees.name, code: employees.empCode, joined: employees.joinDate, status: employees.status } as const;
 export type SortKey = keyof typeof SORTS;
 
-export async function listEmployees(p: { q?: string; dept?: string; status?: string; sort?: string; dir?: string; page?: number }) {
+export async function listEmployees(p: { q?: string; dept?: string; status?: string; sort?: string; dir?: string; page?: number; size?: number }, opts: { sensitive: boolean } = { sensitive: false }) {
+  const PAGE_SIZE = (PAGE_SIZES as readonly number[]).includes(p.size ?? 0) ? p.size! : 10;
   const where: SQL[] = [];
   if (p.q) {
     const like = `%${p.q.replace(/[%_\\]/g, "\\$&")}%`;
@@ -36,14 +37,16 @@ export async function listEmployees(p: { q?: string; dept?: string; status?: str
     db.select({
       id: employees.id, empCode: employees.empCode, name: employees.name, designation: employees.designation,
       status: employees.status, joinDate: employees.joinDate, department: departments.name,
-      visaExpiry: employees.visaExpiry, emiratesIdExpiry: employees.emiratesIdExpiry,
-      passportExpiry: employees.passportExpiry, labourCardExpiry: employees.labourCardExpiry,
+      visaExpiry: employees.visaExpiry, visaIssueDate: employees.visaIssueDate, emiratesIdExpiry: employees.emiratesIdExpiry,
+      passportExpiry: employees.passportExpiry, passportIssueDate: employees.passportIssueDate, labourCardExpiry: employees.labourCardExpiry,
+      passportNoEnc: employees.passportNoEnc, photoKey: employees.photoKey,
     })
       .from(employees).leftJoin(departments, eq(departments.id, employees.departmentId))
       .where(w).orderBy(order, asc(employees.id)).limit(PAGE_SIZE).offset((page - 1) * PAGE_SIZE),
     db.select({ total: count() }).from(employees).where(w),
   ]);
-  return { rows, total, page, pages: Math.max(1, Math.ceil(total / PAGE_SIZE)) };
+  const mask = (enc: string | null) => { if (!enc) return null; const plain = decryptField(enc); return opts.sensitive ? plain : "•••• " + plain.slice(-4); };
+  return { rows: rows.map(({ passportNoEnc, ...r }) => ({ ...r, passportNo: mask(passportNoEnc) })), total, page, size: PAGE_SIZE, pages: Math.max(1, Math.ceil(total / PAGE_SIZE)) };
 }
 
 export async function getEmployee(id: string, opts: { sensitive: boolean }) {
@@ -59,7 +62,8 @@ export async function getEmployee(id: string, opts: { sensitive: boolean }) {
 }
 
 function toRow(input: EmployeeInput) {
-  const { emiratesId, passportNo, iban, version: _v, ...rest } = input;
+  const { emiratesId, passportNo, iban, version: _v, empCode: _e, ...rest } = input;
+  void _e;
   void _v;
   return {
     ...rest,
@@ -69,6 +73,7 @@ function toRow(input: EmployeeInput) {
     labourCardNo: rest.labourCardNo ?? null, personCode: rest.personCode ?? null,
     emiratesIdExpiry: rest.emiratesIdExpiry ?? null, passportExpiry: rest.passportExpiry ?? null,
     visaExpiry: rest.visaExpiry ?? null, labourCardExpiry: rest.labourCardExpiry ?? null,
+    passportIssueDate: rest.passportIssueDate ?? null, visaIssueDate: rest.visaIssueDate ?? null,
     bankName: rest.bankName ?? null, routingCode: rest.routingCode ?? null,
     // Blank = leave unchanged (handled by the caller on update).
     _enc: {
@@ -82,7 +87,7 @@ function toRow(input: EmployeeInput) {
 export async function createEmployee(input: EmployeeInput, user: CurrentUser, meta: Meta) {
   const { _enc, ...row } = toRow(input);
   return db.transaction(async (tx) => {
-    const empCode = await nextNumber(tx, "employee", "EMP-");
+    const empCode = input.empCode || (await nextNumber(tx, "employee", "EMP-"));
     const [e] = await tx.insert(employees).values({
       ...row, empCode,
       emiratesIdEnc: _enc.emiratesIdEnc ?? null, passportNoEnc: _enc.passportNoEnc ?? null, ibanEnc: _enc.ibanEnc ?? null,

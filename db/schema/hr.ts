@@ -57,7 +57,9 @@ export const employees = pgTable(
     emiratesIdEnc: text(), // AES-256-GCM
     passportNoEnc: text(),
     emiratesIdExpiry: date({ mode: "string" }),
+    passportIssueDate: date({ mode: "string" }),
     passportExpiry: date({ mode: "string" }),
+    visaIssueDate: date({ mode: "string" }),
     visaExpiry: date({ mode: "string" }),
     labourCardExpiry: date({ mode: "string" }),
     // Bank (WPS)
@@ -66,6 +68,8 @@ export const employees = pgTable(
     routingCode: text(), // bank routing code for WPS
     /** Holiday calendar; null = the default calendar. */
     holidayCalendarId: uuid(),
+    /** Storage key of the employee photo (shown in the register). */
+    photoKey: text(),
     customFields: jsonb().$type<Record<string, string>>().notNull().default({}),
     /** Optional link to a login account. */
     userId: uuid().references(() => users.id),

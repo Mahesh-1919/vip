@@ -18,26 +18,9 @@ export const PERMISSIONS = [
   "hr:payroll:read", "hr:payroll:write", "hr:payroll:finalize", "hr:payroll:export",
   "hr:payslip:read",
   "hr:config:read", "hr:config:write", // shifts, holiday calendars, leave policies, salary components
-  // Inventory / containers / invoicing
-  "inventory:product:read", "inventory:product:write",
-  "inventory:stock:read", "inventory:stock:adjust",
-  "inventory:container:read", "inventory:container:write",
-  "inventory:customer:read", "inventory:customer:write",
-  "inventory:supplier:read", "inventory:supplier:write",
-  "inventory:invoice:read", "inventory:invoice:write",
-  "inventory:payment:read", "inventory:payment:write",
-  // Sales & expenses
-  "sales:sale:read", "sales:sale:write",
-  "sales:expense:read", "sales:expense:write",
-  "sales:report:read",
-  // Accounting
-  "accounting:account:read", "accounting:account:write",
-  "accounting:journal:read", "accounting:journal:write",
-  "accounting:receivable:read",
-  "accounting:payable:read", "accounting:payable:write",
-  "accounting:report:read",
-  "accounting:tax:read",
-  "accounting:payroll-summary:read",
+  // Free zone register
+  "freezone:entry:read", "freezone:entry:write",
+  "freezone:exit:read", "freezone:exit:write",
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];
@@ -52,32 +35,6 @@ export const DEFAULT_ROLES: {
   permissions: Permission[];
 }[] = [
   { key: "admin", name: "Admin", description: "Full access to all modules, users and settings", permissions: all },
-  {
-    key: "hr_manager", name: "HR Manager", description: "HRMS module only",
-    permissions: ["dashboard:view", ...by("hr:")],
-  },
-  {
-    key: "inventory_manager", name: "Inventory Manager",
-    description: "Stock, containers, customers, suppliers, bills and invoices",
-    permissions: ["dashboard:view", ...by("inventory:")],
-  },
-  {
-    key: "sales_manager", name: "Sales Manager",
-    description: "Sales and expenses; read-only view of containers and stock",
-    permissions: [
-      "dashboard:view",
-      ...by("sales:"),
-      "inventory:container:read", "inventory:stock:read", "inventory:product:read", "inventory:customer:read",
-    ],
-  },
-  {
-    key: "accountant", name: "Accountant",
-    description: "Accounting module; read access to sales, invoices and payroll totals",
-    permissions: [
-      "dashboard:view",
-      ...by("accounting:"),
-      "sales:sale:read", "sales:expense:read", "sales:report:read",
-      "inventory:invoice:read", "inventory:payment:read", "inventory:customer:read", "inventory:supplier:read",
-    ],
-  },
+  { key: "hr_manager", name: "HR Manager", description: "HRMS module only", permissions: ["dashboard:view", ...by("hr:")] },
+  { key: "operations_manager", name: "Operations Manager", description: "Free zone entry and exit bills", permissions: ["dashboard:view", ...by("freezone:")] },
 ];

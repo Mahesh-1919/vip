@@ -14,7 +14,6 @@ import { D, toDb } from "@/lib/money";
 import { calculatePayroll, type Rules } from "@/lib/payroll-calc";
 import type { CurrentUser } from "@/lib/auth";
 import { loadSchedules } from "./schedule";
-import { postPayrollFinalized, postPayrollPaid, reversePayroll } from "@/services/accounting/posting";
 
 type Meta = { ip: string | null; userAgent: string | null };
 const who = (u: CurrentUser, m: Meta) => ({ userId: u.id, userEmail: u.email, ...m });
@@ -170,7 +169,6 @@ export async function finalizeRun(runId: string, user: CurrentUser, meta: Meta) 
     if (!fresh.ok.length) throw new AppError(422, "The run has no employees");
 
     await tx.update(payrollRuns).set({ status: "finalized", finalizedBy: user.id, finalizedAt: new Date(), rulesSnapshot: rulesOf(settings), version: sql`${payrollRuns.version} + 1` }).where(eq(payrollRuns.id, runId));
-    await postPayrollFinalized(tx, runId, user.id);
     await audit({ action: "finalize_payroll", entity: "payroll_run", entityId: runId, after: { year: run.year, month: run.month, net: run.totalNet }, ...who(user, meta) }, tx);
   });
 }
@@ -181,7 +179,6 @@ export async function markPaid(runId: string, paidAt: string, user: CurrentUser,
     if (!run) throw new AppError(404, "Payroll run not found");
     if (run.status !== "finalized") throw new AppError(409, "Only a finalised run can be marked paid");
     await tx.update(payrollRuns).set({ status: "paid", paidAt }).where(eq(payrollRuns.id, runId));
-    await postPayrollPaid(tx, runId, user.id);
     await audit({ action: "pay_payroll", entity: "payroll_run", entityId: runId, after: { paidAt }, ...who(user, meta) }, tx);
   });
 }
@@ -193,7 +190,6 @@ export async function reopenRun(runId: string, reason: string, user: CurrentUser
     const [run] = await tx.select().from(payrollRuns).where(eq(payrollRuns.id, runId)).for("update");
     if (!run) throw new AppError(404, "Payroll run not found");
     if (run.status !== "finalized") throw new AppError(409, run.status === "paid" ? "A paid payroll cannot be reopened" : "Run is not finalised");
-    await reversePayroll(tx, runId, run.finalizedAt, user.id);
     await tx.execute(sql`select set_config('erp.allow_reopen', 'on', true)`);
     await tx.update(payrollRuns).set({ status: "draft", finalizedAt: null, finalizedBy: null, version: sql`${payrollRuns.version} + 1` }).where(eq(payrollRuns.id, runId));
     await audit({ action: "reopen_payroll", entity: "payroll_run", entityId: runId, after: { reason }, ...who(user, meta) }, tx);

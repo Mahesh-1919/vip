@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ExitForm } from "../exit-form";
 
 export const metadata: Metadata = { title: "New exit bill" };
+export const instant = false; // session-dependent page: see (dashboard)/layout.tsx
 
 export default async function NewExitPage() {
   await requirePermission("freezone:exit:write");

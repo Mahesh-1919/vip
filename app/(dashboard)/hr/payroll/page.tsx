@@ -13,6 +13,7 @@ import { generateAction } from "./actions";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export const metadata: Metadata = { title: "Payroll" };
+export const instant = false; // session-dependent page: see (dashboard)/layout.tsx
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 export default async function PayrollPage() {

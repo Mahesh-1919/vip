@@ -17,6 +17,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { paymentAction } from "../../actions";
 
 export const metadata: Metadata = { title: "Invoice" };
+export const instant = false; // session-dependent page: see (dashboard)/layout.tsx
 const n = (v: string | number) => new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(v));
 
 export default async function InvoicePage({ params }: PageProps<"/sales/invoices/[id]">) {

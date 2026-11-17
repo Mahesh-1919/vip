@@ -14,6 +14,7 @@ import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export const metadata: Metadata = { title: "Leave requests" };
+export const instant = false; // session-dependent page: see (dashboard)/layout.tsx
 
 export default async function LeavePage({ searchParams }: PageProps<"/hr/leave">) {
   const user = await requirePermission("hr:leave:read");

@@ -11,6 +11,7 @@ export type Column<T> = {
   cell: (row: T) => React.ReactNode;
   align?: "left" | "right" | "center";
   className?: string;
+  headClassName?: string;
   /** Makes the header a sort link: needs `sort` on the table. */
   sortKey?: string;
 };
@@ -19,7 +20,7 @@ export type Column<T> = {
  * Server-rendered table card. Describe columns once, get consistent header/empty/hover styles.
  * Sorting is URL-driven (works with server components): pass `sort` with the current state and a `href(sortKey, dir)` builder.
  */
-export function DataTable<T>({ columns, rows, rowKey, empty, sort, className, dense, footer }: {
+export function DataTable<T>({ columns, rows, rowKey, empty, sort, className, dense, footer, scroll }: {
   columns: Column<T>[];
   rows: T[];
   rowKey: (row: T) => string;
@@ -28,17 +29,19 @@ export function DataTable<T>({ columns, rows, rowKey, empty, sort, className, de
   className?: string;
   /** Tighter rows for spreadsheet-style registers. */
   dense?: boolean;
+  /** Cap the height and keep the header visible while scrolling (long registers). */
+  scroll?: boolean;
   /** Optional totals row: one entry per column key. */
   footer?: Record<string, React.ReactNode>;
 }) {
   const align = (a?: string) => (a === "right" ? "text-right" : a === "center" ? "text-center" : "");
   return (
     <Card className={cn("gap-0 overflow-hidden py-0", className)}>
-      <Table>
-        <TableHeader className="bg-muted/50">
+      <Table containerClassName={scroll ? "max-h-[min(72vh,46rem)] overflow-y-auto" : undefined}>
+        <TableHeader className={cn("bg-muted", scroll && "sticky top-0 z-10 shadow-[0_1px_0_var(--border)]")}>
           <TableRow>
             {columns.map((c) => (
-              <TableHead key={c.key} className={cn(dense ? "px-3" : "px-4", "text-xs uppercase tracking-wide text-muted-foreground", align(c.align), c.className)}>
+              <TableHead key={c.key} className={cn(dense ? "px-3" : "px-4", "whitespace-nowrap bg-muted text-[11px] font-semibold uppercase tracking-wider text-muted-foreground", align(c.align), c.headClassName)}>
                 {c.sortKey && sort ? (
                   <Link href={sort.href(c.sortKey, sort.key === c.sortKey && sort.dir !== "desc" ? "desc" : "asc")} className="hover:text-foreground">
                     {c.header}{sort.key === c.sortKey ? (sort.dir === "desc" ? " ↓" : " ↑") : ""}

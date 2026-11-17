@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = { title: "Access denied" };
+export const instant = false; // session-dependent page: see (dashboard)/layout.tsx
 
 export default function Forbidden() {
   return (

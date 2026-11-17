@@ -14,6 +14,7 @@ import { addHoliday, assignCalendar, createCalendar, removeHoliday } from "./act
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 
 export const metadata: Metadata = { title: "Holiday calendars" };
+export const instant = false; // session-dependent page: see (dashboard)/layout.tsx
 
 export default async function HolidaysPage() {
   const user = await requirePermission("hr:config:read");

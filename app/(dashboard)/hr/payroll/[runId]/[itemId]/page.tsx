@@ -8,6 +8,7 @@ import { getItem } from "@/services/hr/payroll";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata: Metadata = { title: "Payroll breakdown" };
+export const instant = false; // session-dependent page: see (dashboard)/layout.tsx
 
 function Col({ title, lines, total }: { title: string; lines: { name: string; amount: string; note?: string }[]; total: string }) {
   return (

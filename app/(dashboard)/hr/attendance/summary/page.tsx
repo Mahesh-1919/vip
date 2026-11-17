@@ -10,6 +10,7 @@ import { AttendanceTabs, shiftMonth } from "../_components";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export const metadata: Metadata = { title: "Attendance summary" };
+export const instant = false; // session-dependent page: see (dashboard)/layout.tsx
 
 export default async function SummaryPage({ searchParams }: PageProps<"/hr/attendance/summary">) {
   await requirePermission("hr:attendance:read");

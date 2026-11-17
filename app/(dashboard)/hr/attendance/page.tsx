@@ -13,6 +13,7 @@ import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export const metadata: Metadata = { title: "Attendance" };
+export const instant = false; // session-dependent page: see (dashboard)/layout.tsx
 
 export default async function AttendancePage({ searchParams }: PageProps<"/hr/attendance">) {
   const user = await requirePermission("hr:attendance:read");

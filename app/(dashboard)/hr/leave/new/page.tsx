@@ -14,6 +14,7 @@ import { LeaveTabs } from "../_components";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 
 export const metadata: Metadata = { title: "Apply for leave" };
+export const instant = false; // session-dependent page: see (dashboard)/layout.tsx
 
 export default async function NewLeavePage() {
   const user = await requirePermission("hr:leave:write");

@@ -17,6 +17,7 @@ import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export const metadata: Metadata = { title: "Shipment trace" };
+export const instant = false; // session-dependent page: see (dashboard)/layout.tsx
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
 const n = (v: string | number, d = 0) => new Intl.NumberFormat("en-US", { minimumFractionDigits: d, maximumFractionDigits: d }).format(Number(v));
 
@@ -50,7 +51,7 @@ export default async function TracePage({ searchParams }: PageProps<"/freezone/t
     <div className="flex flex-col gap-5">
       <PageHeader title="Shipment trace" description="Pick an import (by container number, bill, transfer or invoice number) and see when it arrived, who received how many packages, through which exit and truck, and what has been invoiced." />
       <Card className="gap-0 py-0"><CardContent className="px-4 py-4">
-        <FilterBar className="items-end">
+        <FilterBar plain>
           <div className="flex items-center gap-2"><Search size={16} className="text-muted-foreground" /><Input name="q" defaultValue={q} placeholder="Container no, bill no, transfer no, invoice no, agent…" className="w-96" /></div>
           <Button type="submit">Trace import</Button>
           <span className="px-2 text-sm text-muted-foreground">or</span>

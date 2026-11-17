@@ -237,11 +237,12 @@ export async function removeAllocation(id: string, user: CurrentUser, meta: Meta
 
 /** Unlinked / partly-linked counts and export bills waiting to be invoiced, for the dashboard. */
 export async function linkSummary() {
+  const [stock] = await db.select({ n: sql<number>`(coalesce(sum(${entryBills.packages}), 0) - (select coalesce(sum(a.packages), 0) from bill_allocations a))::int` }).from(entryBills);
   const [r] = await db.select({
     unlinked: sql<number>`count(*) filter (where ${allocatedSql} = 0)::int`,
     unbilledExports: sql<number>`count(*) filter (where ${exitBills.billType} = 'EXPORT' and ${exitBills.packages} > 0 and ${billedPkgsSql} < ${exitBills.packages})::int`,
   }).from(exitBills);
-  return r;
+  return { ...r, stockPackages: stock.n };
 }
 
 

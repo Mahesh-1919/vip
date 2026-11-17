@@ -12,6 +12,7 @@ import { PageHeader } from "@/components/page-header";
 import { Input } from "@/components/ui/input";
 
 export const metadata: Metadata = { title: "Audit log" };
+export const instant = false; // session-dependent page: see (dashboard)/layout.tsx
 const PAGE = 50;
 
 export default async function AuditPage({ searchParams }: PageProps<"/admin/audit-log">) {

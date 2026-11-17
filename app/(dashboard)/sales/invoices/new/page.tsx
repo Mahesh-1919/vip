@@ -18,6 +18,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { createExitInvoiceAction } from "../../actions";
 
 export const metadata: Metadata = { title: "Invoice export bills" };
+export const instant = false; // session-dependent page: see (dashboard)/layout.tsx
 const n = (v: string | number) => new Intl.NumberFormat("en-US").format(Number(v));
 
 export default async function NewExitInvoicePage({ searchParams }: PageProps<"/sales/invoices/new">) {
@@ -33,7 +34,7 @@ export default async function NewExitInvoicePage({ searchParams }: PageProps<"/s
     <div className="max-w-5xl flex flex-col gap-5">
       <PageHeader title="Invoice export bills" back={{ href: "/sales/invoices", label: "Invoices" }} description="Goods exported to a customer are invoiced at 0% VAT. Bill a whole export bill or just some of its packages; the rest stays available for a later invoice." />
       <Card><CardContent>
-        <FilterBar className="items-end">
+        <FilterBar plain>
           <SelectField name="customerId" label="Customer" required placeholder="Choose a customer…" defaultValue={customerId} className="min-w-72" options={withExports.map((c) => ({ value: c.id, label: c.name }))} />
           <Button type="submit">Show export bills</Button>
         </FilterBar>

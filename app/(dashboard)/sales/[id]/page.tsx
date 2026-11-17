@@ -15,6 +15,7 @@ import { createInvoiceAction } from "../actions";
 import { SaleForm } from "../sale-form";
 
 export const metadata: Metadata = { title: "Sale" };
+export const instant = false; // session-dependent page: see (dashboard)/layout.tsx
 
 export default async function SalePage({ params }: PageProps<"/sales/[id]">) {
   const user = await requirePermission("sales:sale:read");

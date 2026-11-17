@@ -16,6 +16,7 @@ import { toggleCustomerAction } from "../../actions";
 import { CustomerForm } from "../customer-form";
 
 export const metadata: Metadata = { title: "Customer" };
+export const instant = false; // session-dependent page: see (dashboard)/layout.tsx
 
 export default async function CustomerPage({ params }: PageProps<"/sales/customers/[id]">) {
   const user = await requirePermission("sales:customer:read");

@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { EntryForm } from "../entry-form";
 
 export const metadata: Metadata = { title: "New entry bill" };
+export const instant = false; // session-dependent page: see (dashboard)/layout.tsx
 
 export default async function NewEntryPage() {
   await requirePermission("freezone:entry:write");

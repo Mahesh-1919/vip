@@ -5,15 +5,17 @@ import { requirePermission } from "@/lib/auth";
 import { formatSheetDate } from "@/lib/dates";
 import { customerOptions, listSales, PAGE_SIZES } from "@/services/billing";
 import { DataTable, type Column } from "@/components/data-table";
-import { FilterBar } from "@/components/filter-bar";
+import { FilterBar, FilterField } from "@/components/filter-bar";
 import { PageHeader } from "@/components/page-header";
 import { Pagination } from "@/components/pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { DateRange } from "@/components/date-range";
 
 export const metadata: Metadata = { title: "Sales" };
+export const instant = false; // session-dependent page: see (dashboard)/layout.tsx
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
 const aed = (v: string | number) => new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(v));
 const date = (v: string) => (/^\d{4}-\d{2}-\d{2}$/.test(v) ? v : "");
@@ -44,12 +46,13 @@ export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
         {user.permissions.has("sales:sale:write") && <Link href="/sales/new" className={buttonVariants()}><Plus size={16} />New sale</Link>}
       </>} />
       <FilterBar>
-        <label className="flex items-center gap-2 text-sm">Show <NativeSelect name="size" defaultValue={String(res.size)} wrapperClassName="w-24">{PAGE_SIZES.map((s) => <NativeSelectOption key={s} value={s}>{s}</NativeSelectOption>)}</NativeSelect> entries</label>
-        <Input name="q" defaultValue={params.q} placeholder="Search ref, customer, bill…" className="w-64" />
-        <NativeSelect name="customerId" defaultValue={params.customerId} wrapperClassName="w-52"><NativeSelectOption value="">All customers</NativeSelectOption>{customers.map((c) => <NativeSelectOption key={c.id} value={c.id}>{c.name}</NativeSelectOption>)}</NativeSelect>
-        <NativeSelect name="invoiced" defaultValue={params.invoiced} wrapperClassName="w-40"><NativeSelectOption value="">Any invoicing</NativeSelectOption><NativeSelectOption value="no">Not invoiced</NativeSelectOption><NativeSelectOption value="yes">Invoiced</NativeSelectOption></NativeSelect>
-        <Input type="date" name="from" defaultValue={params.from} aria-label="From" className="w-40" /><Input type="date" name="to" defaultValue={params.to} aria-label="To" className="w-40" />
-        <Button variant="outline" type="submit">Apply</Button>
+        <FilterField label="Search"><Input name="q" defaultValue={params.q} placeholder="Ref, customer, bill…" className="w-64" /></FilterField>
+        <FilterField label="Customer"><NativeSelect name="customerId" defaultValue={params.customerId} wrapperClassName="w-56"><NativeSelectOption value="">All customers</NativeSelectOption>{customers.map((c) => <NativeSelectOption key={c.id} value={c.id}>{c.name}</NativeSelectOption>)}</NativeSelect></FilterField>
+        <FilterField label="Invoicing"><NativeSelect name="invoiced" defaultValue={params.invoiced} wrapperClassName="w-40"><NativeSelectOption value="">Any</NativeSelectOption><NativeSelectOption value="no">Not invoiced</NativeSelectOption><NativeSelectOption value="yes">Invoiced</NativeSelectOption></NativeSelect></FilterField>
+        <DateRange from={params.from} to={params.to} />
+        <FilterField label="Rows"><NativeSelect name="size" defaultValue={String(res.size)} wrapperClassName="w-20">{PAGE_SIZES.map((s) => <NativeSelectOption key={s} value={s}>{s}</NativeSelectOption>)}</NativeSelect></FilterField>
+        <Button type="submit">Apply</Button>
+        <Link href="/sales" className={buttonVariants({ variant: "ghost" })}>Reset</Link>
       </FilterBar>
       <DataTable columns={cols} rows={res.rows} rowKey={({ s }) => s.id} empty={{ title: "No sales yet", hint: "Record the first sale." }} footer={{ ref: "Total", n: aed(res.totals.net), t: aed(res.totals.gross) }} />
       <Pagination page={res.page} pages={res.pages} total={res.total} basePath="/sales" params={keep} />

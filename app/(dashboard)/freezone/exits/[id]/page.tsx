@@ -19,6 +19,7 @@ import { allocateAction, deleteExitAction, removeAllocationAction } from "../act
 import { ExitForm } from "../exit-form";
 
 export const metadata: Metadata = { title: "Exit bill" };
+export const instant = false; // session-dependent page: see (dashboard)/layout.tsx
 const n = (v: string | number, d = 0) => new Intl.NumberFormat("en-US", { minimumFractionDigits: d, maximumFractionDigits: d }).format(Number(v));
 
 export default async function ExitPage({ params }: PageProps<"/freezone/exits/[id]">) {

@@ -14,6 +14,7 @@ import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { Checkbox } from "@/components/ui/checkbox";
 
 export const metadata: Metadata = { title: "Leave types" };
+export const instant = false; // session-dependent page: see (dashboard)/layout.tsx
 
 export default async function LeaveTypesPage() {
   const user = await requirePermission("hr:config:read");

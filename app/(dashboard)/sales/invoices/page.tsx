@@ -6,7 +6,7 @@ import { formatSheetDate } from "@/lib/dates";
 import { D, formatAED } from "@/lib/money";
 import { customerOptions, listInvoices, PAGE_SIZES, receivables, stateOf } from "@/services/billing";
 import { DataTable, type Column } from "@/components/data-table";
-import { FilterBar } from "@/components/filter-bar";
+import { FilterBar, FilterField } from "@/components/filter-bar";
 import { PageHeader } from "@/components/page-header";
 import { Pagination } from "@/components/pagination";
 import { StatCard } from "@/components/stat-card";
@@ -14,8 +14,10 @@ import { StatusBadge } from "@/components/status-badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { DateRange } from "@/components/date-range";
 
 export const metadata: Metadata = { title: "Invoices" };
+export const instant = false; // session-dependent page: see (dashboard)/layout.tsx
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
 const aed = (v: string | number) => new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(v));
 const date = (v: string) => (/^\d{4}-\d{2}-\d{2}$/.test(v) ? v : "");
@@ -45,12 +47,13 @@ export default async function InvoicesPage({ searchParams }: PageProps<"/sales/i
       <PageHeader title="Invoices" description={`Number of records: ${res.total}. Goods exported are invoiced from the export bills; other sales are invoiced from the sale.`} actions={<><a href={`/api/sales/export?sheet=invoices&${qs}`} className={buttonVariants({ variant: "outline" })}><Download size={16} />CSV</a><Link href="/sales/invoices/new" className={buttonVariants()}>Invoice export bills</Link></>} />
       <div className="grid gap-3 sm:grid-cols-3"><StatCard label="Outstanding (AED)" value={formatAED(recv.outstanding.toFixed(2))} /><StatCard label="Overdue (AED)" value={formatAED(recv.overdue.toFixed(2))} tone={recv.overdue.gt(0) ? "danger" : undefined} href="/sales/invoices?status=overdue" /><StatCard label="Customers owing" value={recv.rows.length} /></div>
       <FilterBar>
-        <label className="flex items-center gap-2 text-sm">Show <NativeSelect name="size" defaultValue={String(res.size)} wrapperClassName="w-24">{PAGE_SIZES.map((s) => <NativeSelectOption key={s} value={s}>{s}</NativeSelectOption>)}</NativeSelect> entries</label>
-        <Input name="q" defaultValue={params.q} placeholder="Search number or customer" className="w-60" />
-        <NativeSelect name="status" defaultValue={params.status} wrapperClassName="w-36"><NativeSelectOption value="">All statuses</NativeSelectOption>{["unpaid", "partial", "paid", "overdue"].map((s) => <NativeSelectOption key={s} value={s}>{s}</NativeSelectOption>)}</NativeSelect>
-        <NativeSelect name="customerId" defaultValue={params.customerId} wrapperClassName="w-52"><NativeSelectOption value="">All customers</NativeSelectOption>{customers.map((c) => <NativeSelectOption key={c.id} value={c.id}>{c.name}</NativeSelectOption>)}</NativeSelect>
-        <Input type="date" name="from" defaultValue={params.from} aria-label="From" className="w-40" /><Input type="date" name="to" defaultValue={params.to} aria-label="To" className="w-40" />
-        <Button variant="outline" type="submit">Apply</Button>
+        <FilterField label="Search"><Input name="q" defaultValue={params.q} placeholder="Number or customer" className="w-60" /></FilterField>
+        <FilterField label="Status"><NativeSelect name="status" defaultValue={params.status} wrapperClassName="w-36"><NativeSelectOption value="">All</NativeSelectOption>{["unpaid", "partial", "paid", "overdue"].map((s) => <NativeSelectOption key={s} value={s}>{s}</NativeSelectOption>)}</NativeSelect></FilterField>
+        <FilterField label="Customer"><NativeSelect name="customerId" defaultValue={params.customerId} wrapperClassName="w-56"><NativeSelectOption value="">All customers</NativeSelectOption>{customers.map((c) => <NativeSelectOption key={c.id} value={c.id}>{c.name}</NativeSelectOption>)}</NativeSelect></FilterField>
+        <DateRange from={params.from} to={params.to} />
+        <FilterField label="Rows"><NativeSelect name="size" defaultValue={String(res.size)} wrapperClassName="w-20">{PAGE_SIZES.map((s) => <NativeSelectOption key={s} value={s}>{s}</NativeSelectOption>)}</NativeSelect></FilterField>
+        <Button type="submit">Apply</Button>
+        <Link href="/sales/invoices" className={buttonVariants({ variant: "ghost" })}>Reset</Link>
       </FilterBar>
       <DataTable columns={cols} rows={res.rows} rowKey={({ inv }) => inv.id} empty={{ title: "No invoices", hint: "Open a sale and choose Create invoice." }} footer={{ n: "Total", t: aed(res.totals.amount), p: aed(res.totals.paid), o: aed(D(res.totals.amount).minus(res.totals.paid).toFixed(2)) }} />
       <Pagination page={res.page} pages={res.pages} total={res.total} basePath="/sales/invoices" params={keep} />

@@ -7,6 +7,7 @@ import { saveEmployee } from "../actions";
 import { EmployeeForm } from "../employee-form";
 
 export const metadata: Metadata = { title: "New employee" };
+export const instant = false; // session-dependent page: see (dashboard)/layout.tsx
 
 export default async function NewEmployeePage() {
   const user = await requirePermission("hr:employee:write");

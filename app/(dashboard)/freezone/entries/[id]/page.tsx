@@ -16,6 +16,7 @@ import { deleteEntryAction } from "../actions";
 import { EntryForm } from "../entry-form";
 
 export const metadata: Metadata = { title: "Entry bill" };
+export const instant = false; // session-dependent page: see (dashboard)/layout.tsx
 const n = (v: string | number) => new Intl.NumberFormat("en-US").format(Number(v));
 
 export default async function EntryPage({ params }: PageProps<"/freezone/entries/[id]">) {

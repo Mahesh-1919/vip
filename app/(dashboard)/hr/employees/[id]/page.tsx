@@ -23,6 +23,7 @@ import { EmployeeAvatar } from "@/components/employee-avatar";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 
 export const metadata: Metadata = { title: "Employee" };
+export const instant = false; // session-dependent page: see (dashboard)/layout.tsx
 
 export default async function EmployeePage({ params }: PageProps<"/hr/employees/[id]">) {
   const user = await requirePermission("hr:employee:read");

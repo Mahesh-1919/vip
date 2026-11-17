@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 
 export const metadata: Metadata = { title: "Customers" };
+export const instant = false; // session-dependent page: see (dashboard)/layout.tsx
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
 const PAGE = 25;
 

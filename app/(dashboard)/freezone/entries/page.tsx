@@ -6,15 +6,18 @@ import { formatSheetDate } from "@/lib/dates";
 import { entryAgents, listEntries, PAGE_SIZES } from "@/services/freezone";
 import { containersOf } from "@/services/trace";
 import { DataTable, type Column } from "@/components/data-table";
-import { FilterBar } from "@/components/filter-bar";
+import { FilterBar, FilterField } from "@/components/filter-bar";
 import { PageHeader } from "@/components/page-header";
 import { Pagination } from "@/components/pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
+import { DateRange } from "@/components/date-range";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export const metadata: Metadata = { title: "Entry bills" };
+export const instant = false; // session-dependent page: see (dashboard)/layout.tsx
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
 const n = (v: string | number) => new Intl.NumberFormat("en-US").format(Number(v));
 const num = (v: string | number, d = 2) => new Intl.NumberFormat("en-US", { minimumFractionDigits: d, maximumFractionDigits: d }).format(Number(v));
@@ -32,9 +35,9 @@ export default async function EntriesPage({ searchParams }: PageProps<"/freezone
   const qs = new URLSearchParams(Object.entries(params).filter(([k, v]) => v && k !== "size") as [string, string][]).toString();
 
   const columns: Column<(typeof res.rows)[number]>[] = [
-    { key: "sl", header: "Sl", cell: ({ sl }) => sl, className: "text-muted-foreground" },
-    { key: "date", header: "Bill Date", className: "whitespace-nowrap", cell: ({ e }) => formatSheetDate(e.billDate) },
-    { key: "no", header: "Bill No", className: "whitespace-nowrap", cell: ({ e }) => <Link href={`/freezone/entries/${e.id}`} className="font-mono text-xs text-primary hover:underline">{e.billNo}</Link> },
+    { key: "sl", header: "Sl", cell: ({ sl }) => sl, className: "sticky left-0 z-[1] w-12 min-w-12 bg-card text-muted-foreground", headClassName: "sticky left-0 z-20 w-12 min-w-12" },
+    { key: "date", header: "Bill Date", className: "sticky left-12 z-[1] w-24 min-w-24 whitespace-nowrap bg-card", headClassName: "sticky left-12 z-20 w-24 min-w-24", cell: ({ e }) => formatSheetDate(e.billDate) },
+    { key: "no", header: "Bill No", className: "sticky left-36 z-[1] min-w-44 whitespace-nowrap bg-card shadow-[1px_0_0_var(--border)]", headClassName: "sticky left-36 z-20 min-w-44 shadow-[1px_0_0_var(--border)]", cell: ({ e }) => <Link href={`/freezone/entries/${e.id}`} className="font-mono text-xs text-primary hover:underline">{e.billNo}</Link> },
     { key: "agent", header: "Agent Name", cell: ({ e }) => e.agentName },
     { key: "tr", header: "Transfer No", className: "font-mono text-xs", cell: ({ e }) => e.transferNo },
     { key: "arr", header: "Arrival Date", className: "whitespace-nowrap", cell: ({ e }) => formatSheetDate(e.arrivalDate) },
@@ -58,16 +61,16 @@ export default async function EntriesPage({ searchParams }: PageProps<"/freezone
           {user.permissions.has("freezone:entry:write") && <Link href="/freezone/entries/new" className={buttonVariants()}><Plus size={16} />Add entry</Link>}
         </>} />
       <FilterBar>
-        <label className="flex items-center gap-2 text-sm">Show
-          <NativeSelect name="size" defaultValue={String(res.size)} wrapperClassName="w-24">{PAGE_SIZES.map((s) => <NativeSelectOption key={s} value={s}>{s}</NativeSelectOption>)}</NativeSelect> entries</label>
-        <Input name="q" defaultValue={params.q} placeholder="Search bill, agent, invoice, container…" className="w-72" />
-        <NativeSelect name="agent" defaultValue={params.agent} wrapperClassName="w-56"><NativeSelectOption value="">All agents</NativeSelectOption>{agents.map((a) => <NativeSelectOption key={a} value={a}>{a}</NativeSelectOption>)}</NativeSelect>
-        <Input name="origin" defaultValue={params.origin} placeholder="Stock (CN…)" className="w-28" />
-        <label className="flex items-center gap-1.5 text-sm"><input type="checkbox" name="open" value="1" defaultChecked={params.open === "1"} /> Stock left only</label>
-        <Input type="date" name="from" defaultValue={params.from} aria-label="From" className="w-40" /><Input type="date" name="to" defaultValue={params.to} aria-label="To" className="w-40" />
-        <Button variant="outline" type="submit">Apply</Button>
+        <FilterField label="Search"><Input name="q" defaultValue={params.q} placeholder="Bill, agent, invoice, container…" className="w-72" /></FilterField>
+        <FilterField label="Agent"><NativeSelect name="agent" defaultValue={params.agent} wrapperClassName="w-56"><NativeSelectOption value="">All agents</NativeSelectOption>{agents.map((a) => <NativeSelectOption key={a} value={a}>{a}</NativeSelectOption>)}</NativeSelect></FilterField>
+        <FilterField label="Stock (origin)"><Input name="origin" defaultValue={params.origin} placeholder="CN, TR…" className="w-28" /></FilterField>
+        <DateRange from={params.from} to={params.to} />
+        <label className="flex h-9 items-center gap-2 text-sm"><Checkbox name="open" value="1" defaultChecked={params.open === "1"} /> Stock left only</label>
+        <FilterField label="Rows"><NativeSelect name="size" defaultValue={String(res.size)} wrapperClassName="w-20">{PAGE_SIZES.map((s) => <NativeSelectOption key={s} value={s}>{s}</NativeSelectOption>)}</NativeSelect></FilterField>
+        <Button type="submit">Apply</Button>
+        <Link href="/freezone/entries" className={buttonVariants({ variant: "ghost" })}>Reset</Link>
       </FilterBar>
-      <DataTable dense columns={columns} rows={res.rows} rowKey={({ e }) => e.id} empty={{ title: "No entry bills", hint: "Add the first entry, or change the filters." }}
+      <DataTable dense scroll columns={columns} rows={res.rows} rowKey={({ e }) => e.id} empty={{ title: "No entry bills", hint: "Add the first entry, or change the filters." }}
         footer={{ sl: "Total", val: num(res.totals.value), wt: num(res.totals.weight, 0), pk: num(res.totals.packages, 0) }} />
       <Pagination page={res.page} pages={res.pages} total={res.total} basePath="/freezone/entries" params={keep} />
     </div>

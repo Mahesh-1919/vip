@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { APP_NAME } from "@/lib/brand";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
@@ -15,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: { default: "Mini ERP", template: "%s · Mini ERP" },
+  title: { default: APP_NAME, template: `%s · ${APP_NAME}` },
   description: "HRMS, inventory & containers, sales and accounting for import/export trading",
   robots: { index: false, follow: false },
 };

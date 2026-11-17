@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import {
   LayoutDashboard, Users, CalendarCheck, Plane, Wallet, FileText, Clock, CalendarDays, Settings, Settings2,
-  UserCog, ScrollText, Building2, PackagePlus, PackageMinus, Route, ShoppingCart, ReceiptText, Contact, ChevronDown, ShieldCheck, LogOut, type LucideIcon,
+  UserCog, ScrollText, Boxes, Building2, PackagePlus, PackageMinus, Route, ShoppingCart, ReceiptText, Contact, ChevronDown, ShieldCheck, LogOut, type LucideIcon,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
@@ -32,7 +32,8 @@ function CloseOnNavigate({ pathname }: { pathname: string }) {
   return null;
 }
 
-export function AppFrame({ sections, user, logout, children }: {
+export function AppFrame({ appName, companyName, sections, user, logout, children }: {
+  appName: string; companyName: string;
   sections: Section[];
   user: { name: string; role: string; email: string };
   logout: () => Promise<void>;
@@ -53,7 +54,7 @@ export function AppFrame({ sections, user, logout, children }: {
         <SidebarHeader>
           <SidebarMenu><SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link href="/"><span className="grid size-8 shrink-0 place-items-center rounded-md bg-sidebar-primary text-sm font-bold text-sidebar-primary-foreground">E</span><span className="text-base font-semibold">Mini ERP</span></Link>
+              <Link href="/"><span className="grid size-8 shrink-0 place-items-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground"><Boxes className="size-[18px]" /></span><span className="grid min-w-0 leading-tight"><span className="truncate text-sm font-semibold text-white">{appName}</span><span className="truncate text-[11px] font-normal text-sidebar-foreground/70">{companyName}</span></span></Link>
             </SidebarMenuButton>
           </SidebarMenuItem></SidebarMenu>
         </SidebarHeader>
@@ -96,10 +97,12 @@ export function AppFrame({ sections, user, logout, children }: {
           <Breadcrumb className="min-w-0 flex-1">
             <BreadcrumbList className="flex-nowrap">
               {segs.length === 0 ? <BreadcrumbItem><BreadcrumbPage>Dashboard</BreadcrumbPage></BreadcrumbItem> : segs.map((s, i) => (
-                <BreadcrumbItem key={i} className="truncate">
+                <Fragment key={i}>
                   {i > 0 && <BreadcrumbSeparator />}
-                  {i === segs.length - 1 ? <BreadcrumbPage>{pretty(s)}</BreadcrumbPage> : <span className="text-muted-foreground">{pretty(s)}</span>}
-                </BreadcrumbItem>
+                  <BreadcrumbItem className="truncate">
+                    {i === segs.length - 1 ? <BreadcrumbPage>{pretty(s)}</BreadcrumbPage> : <span className="text-muted-foreground">{pretty(s)}</span>}
+                  </BreadcrumbItem>
+                </Fragment>
               ))}
             </BreadcrumbList>
           </Breadcrumb>

@@ -9,6 +9,7 @@ import { addComponent, addDepartment, toggleActive } from "./actions";
 import { ComponentForm, DepartmentForm } from "./forms";
 
 export const metadata: Metadata = { title: "HR settings" };
+export const instant = false; // session-dependent page: see (dashboard)/layout.tsx
 
 function Toggle({ kind, id, active }: { kind: string; id: string; active: boolean }) {
   return (

@@ -18,6 +18,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { StatCard } from "@/components/stat-card";
 
 export const metadata: Metadata = { title: "Payroll run" };
+export const instant = false; // session-dependent page: see (dashboard)/layout.tsx
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
 export default async function RunPage({ params }: PageProps<"/hr/payroll/[runId]">) {

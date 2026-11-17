@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { SaleForm } from "../sale-form";
 
 export const metadata: Metadata = { title: "New sale" };
+export const instant = false; // session-dependent page: see (dashboard)/layout.tsx
 export default async function NewSalePage() {
   await requirePermission("sales:sale:write");
   const customers = await customerOptions();

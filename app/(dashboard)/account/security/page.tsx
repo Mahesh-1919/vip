@@ -12,6 +12,7 @@ import { beginTotpEnrollment, confirmTotpEnrollment } from "./actions";
 import { EnrollForm } from "./enroll-form";
 
 export const metadata: Metadata = { title: "Security" };
+export const instant = false; // session-dependent page: see (dashboard)/layout.tsx
 
 export default async function SecurityPage() {
   const user = await requireUser({ allowUnenrolled: true });

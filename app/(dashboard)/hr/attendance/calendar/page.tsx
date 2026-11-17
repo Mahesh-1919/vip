@@ -13,6 +13,7 @@ import { AttendanceTabs, shiftMonth } from "../_components";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 
 export const metadata: Metadata = { title: "Attendance calendar" };
+export const instant = false; // session-dependent page: see (dashboard)/layout.tsx
 const COLORS: Record<string, string> = {
   present: "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300", late: "bg-amber-500/25 text-amber-700 dark:text-amber-300",
   half_day: "bg-sky-500/25 text-sky-700 dark:text-sky-300", absent: "bg-red-500/25 text-red-700 dark:text-red-300", on_leave: "bg-violet-500/25 text-violet-700 dark:text-violet-300",

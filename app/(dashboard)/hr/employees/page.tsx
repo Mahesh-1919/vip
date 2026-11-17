@@ -8,7 +8,8 @@ import { requirePermission } from "@/lib/auth";
 import { daysUntil, formatDateMon } from "@/lib/dates";
 import { listEmployees, PAGE_SIZES } from "@/services/hr/employees";
 import { EmployeeAvatar } from "@/components/employee-avatar";
-import { FilterBar } from "@/components/filter-bar";
+import { FilterBar, FilterField } from "@/components/filter-bar";
+import { PageHeader } from "@/components/page-header";
 import { Pagination } from "@/components/pagination";
 import { StatusBadge } from "@/components/status-badge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -18,6 +19,7 @@ import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export const metadata: Metadata = { title: "Employees" };
+export const instant = false; // session-dependent page: see (dashboard)/layout.tsx
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
 
 /** Issue / expiry pair; expired dates are red, ones expiring within 90 days amber. */
@@ -46,48 +48,41 @@ export default async function EmployeesPage({ searchParams }: PageProps<"/hr/emp
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1>Company Staff</h1>
-          <p className="text-sm text-muted-foreground">Number of records : <b className="text-foreground">{res.total}</b></p>
-        </div>
-        {user.permissions.has("hr:employee:write") && <Link href="/hr/employees/new" className={buttonVariants()}><Plus size={16} />Add employee</Link>}
-      </div>
+      <PageHeader title="Company Staff" description={<>Number of records: <b className="text-foreground">{res.total}</b></>}
+        actions={user.permissions.has("hr:employee:write") && <Link href="/hr/employees/new" className={buttonVariants()}><Plus size={16} />Add employee</Link>} />
 
       <FilterBar>
-        <label className="flex items-center gap-2 text-sm">Show
-          <NativeSelect name="size" defaultValue={String(res.size)} wrapperClassName="w-24">{PAGE_SIZES.map((s) => <NativeSelectOption key={s} value={s}>{s}</NativeSelectOption>)}</NativeSelect> entries</label>
-        <NativeSelect name="dept" defaultValue={params.dept} wrapperClassName="w-52"><NativeSelectOption value="">All departments</NativeSelectOption>{depts.map((d) => <NativeSelectOption key={d.id} value={d.id}>{d.name}</NativeSelectOption>)}</NativeSelect>
-        <NativeSelect name="status" defaultValue={params.status} wrapperClassName="w-40"><NativeSelectOption value="">All statuses</NativeSelectOption>{["active", "on_leave", "notice_period", "inactive", "terminated"].map((s) => <NativeSelectOption key={s} value={s}>{s.replace("_", " ")}</NativeSelectOption>)}</NativeSelect>
-        <div className="ml-auto flex items-center gap-2">
-          <Input name="q" defaultValue={params.q} placeholder="Search name, ID or passport" className="w-64" />
-          <Button variant="outline" type="submit">Search</Button>
-        </div>
+        <FilterField label="Search"><Input name="q" defaultValue={params.q} placeholder="Name, ID or passport" className="w-72" /></FilterField>
+        <FilterField label="Department"><NativeSelect name="dept" defaultValue={params.dept} wrapperClassName="w-52"><NativeSelectOption value="">All departments</NativeSelectOption>{depts.map((d) => <NativeSelectOption key={d.id} value={d.id}>{d.name}</NativeSelectOption>)}</NativeSelect></FilterField>
+        <FilterField label="Status"><NativeSelect name="status" defaultValue={params.status} wrapperClassName="w-40"><NativeSelectOption value="">All</NativeSelectOption>{["active", "on_leave", "notice_period", "inactive", "terminated"].map((s) => <NativeSelectOption key={s} value={s}>{s.replace("_", " ")}</NativeSelectOption>)}</NativeSelect></FilterField>
+        <FilterField label="Rows"><NativeSelect name="size" defaultValue={String(res.size)} wrapperClassName="w-20">{PAGE_SIZES.map((s) => <NativeSelectOption key={s} value={s}>{s}</NativeSelectOption>)}</NativeSelect></FilterField>
+        <Button type="submit">Search</Button>
+        <Link href="/hr/employees" className={buttonVariants({ variant: "ghost" })}>Reset</Link>
       </FilterBar>
 
       <Card className="gap-0 overflow-hidden py-0">
         <Table>
-          <TableHeader className="bg-muted/60">
+          <TableHeader className="bg-muted/60 [&_th]:whitespace-nowrap [&_th]:text-[11px] [&_th]:font-semibold [&_th]:uppercase [&_th]:tracking-wider [&_th]:text-muted-foreground">
             <TableRow>
-              <TableHead className="px-4">Picture</TableHead><TableHead className="px-4">Employee ID</TableHead><TableHead className="px-4">Full Name</TableHead>
-              <TableHead className="px-4">Passport No.</TableHead><TableHead className="px-4">Passport Details</TableHead><TableHead className="px-4">Designation</TableHead>
-              <TableHead className="px-4">Status</TableHead><TableHead className="px-4">Visa / ID Details</TableHead>
+              <TableHead className="px-3">Picture</TableHead><TableHead className="px-3">Employee ID</TableHead><TableHead className="px-3">Full Name</TableHead>
+              <TableHead className="px-3">Passport No.</TableHead><TableHead className="px-3">Passport Details</TableHead><TableHead className="px-3">Designation</TableHead>
+              <TableHead className="px-3">Status</TableHead><TableHead className="px-3">Visa / ID Details</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {res.rows.map((r) => (
               <TableRow key={r.id}>
-                <TableCell className="px-4 py-2"><EmployeeAvatar id={r.id} name={r.name} hasPhoto={!!r.photoKey} /></TableCell>
-                <TableCell className="px-4 font-mono text-xs">{r.empCode}</TableCell>
-                <TableCell className="px-4 whitespace-normal"><Link href={`/hr/employees/${r.id}`} className="font-medium uppercase text-primary hover:underline">{r.name}</Link>{r.department && <div className="text-xs normal-case text-muted-foreground">{r.department}</div>}</TableCell>
-                <TableCell className="px-4 font-mono text-xs uppercase">{r.passportNo ?? "—"}</TableCell>
-                <TableCell className="px-4"><DatePair issue={r.passportIssueDate} expiry={r.passportExpiry} /></TableCell>
-                <TableCell className="px-4">{r.designation ?? "—"}</TableCell>
-                <TableCell className="px-4"><StatusBadge status={r.status} /></TableCell>
-                <TableCell className="px-4"><DatePair issue={r.visaIssueDate} expiry={r.visaExpiry} /></TableCell>
+                <TableCell className="px-3 py-2 w-16"><EmployeeAvatar id={r.id} name={r.name} hasPhoto={!!r.photoKey} className="size-11" /></TableCell>
+                <TableCell className="px-3 font-mono text-xs">{r.empCode}</TableCell>
+                <TableCell className="min-w-44 px-3 whitespace-normal"><Link href={`/hr/employees/${r.id}`} className="font-medium uppercase text-primary hover:underline">{r.name}</Link>{r.department && <div className="text-xs normal-case text-muted-foreground">{r.department}</div>}</TableCell>
+                <TableCell className="px-3 font-mono text-xs uppercase whitespace-nowrap">{r.passportNo ?? "—"}</TableCell>
+                <TableCell className="px-3"><DatePair issue={r.passportIssueDate} expiry={r.passportExpiry} /></TableCell>
+                <TableCell className="px-3">{r.designation ?? "—"}</TableCell>
+                <TableCell className="px-3"><StatusBadge status={r.status} /></TableCell>
+                <TableCell className="px-3"><DatePair issue={r.visaIssueDate} expiry={r.visaExpiry} /></TableCell>
               </TableRow>
             ))}
-            {!res.rows.length && <TableRow><TableCell colSpan={8} className="px-4 py-12 text-center text-muted-foreground">No employees found.</TableCell></TableRow>}
+            {!res.rows.length && <TableRow><TableCell colSpan={8} className="px-3 py-12 text-center text-muted-foreground">No employees found.</TableCell></TableRow>}
           </TableBody>
         </Table>
       </Card>

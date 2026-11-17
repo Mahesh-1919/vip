@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 
 export const metadata: Metadata = { title: "Payslips" };
+export const instant = false; // session-dependent page: see (dashboard)/layout.tsx
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
 export default async function PayslipsPage({ searchParams }: PageProps<"/hr/payslips">) {

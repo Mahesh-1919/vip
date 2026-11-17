@@ -1,6 +1,6 @@
 import "server-only";
 import { cookies } from "next/headers";
-import { and, eq, gt, isNull } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { sessions } from "@/db/schema";
 import { randomToken, sha256 } from "./crypto";
@@ -36,7 +36,7 @@ export async function getSessionRow() {
   const [row] = await db
     .select()
     .from(sessions)
-    .where(and(eq(sessions.tokenHash, sha256(token)), isNull(sessions.revokedAt), gt(sessions.expiresAt, new Date())))
+    .where(and(eq(sessions.tokenHash, sha256(token)), isNull(sessions.revokedAt), sql`${sessions.expiresAt} > now()`))
     .limit(1);
   return row ?? null;
 }

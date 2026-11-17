@@ -11,6 +11,7 @@ import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select"
 import { Checkbox } from "@/components/ui/checkbox";
 
 export const metadata: Metadata = { title: "Payroll settings" };
+export const instant = false; // session-dependent page: see (dashboard)/layout.tsx
 
 export default async function PayrollSettingsPage() {
   const user = await requirePermission("hr:config:read");

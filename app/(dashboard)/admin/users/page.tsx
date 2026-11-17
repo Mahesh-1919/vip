@@ -10,6 +10,7 @@ import { CreateUserForm } from "./create-form";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export const metadata: Metadata = { title: "Users" };
+export const instant = false; // session-dependent page: see (dashboard)/layout.tsx
 
 export default async function UsersPage() {
   const me = await requirePermission("admin:user:read");

@@ -13,6 +13,7 @@ import { AppError } from "@/lib/errors";
 import { clientMeta } from "@/lib/request";
 import { customerSchema, invoiceFormSchema, paymentSchema, parseLines, saleHeaderSchema } from "@/validators/sales";
 import * as billing from "@/services/billing";
+import * as exitBilling from "@/services/exit-billing";
 
 const msg = (e: z.ZodError) => `${e.issues[0].path[0] ? String(e.issues[0].path[0]) + ": " : ""}${e.issues[0].message}`;
 const done = () => revalidatePath("/sales", "layout");
@@ -88,4 +89,24 @@ export async function toggleCustomerAction(form: FormData) {
   await db.update(customers).set({ isActive: p.active === "true" }).where(eq(customers.id, p.id));
   await audit({ action: p.active === "true" ? "activate" : "deactivate", entity: "customer", entityId: p.id, userId: user.id, userEmail: user.email, ...(await clientMeta()) });
   done();
+}
+
+/** Fields `pk:<exitBillId>` hold the packages to invoice on each export bill. */
+export async function createExitInvoiceAction(_: ActionState, form: FormData): Promise<ActionState> {
+  const user = await requirePermission("sales:invoice:write");
+  const p = z.object({ customerId: z.uuid(), issueDate: z.iso.date("Choose the invoice date"), dueDate: z.string().trim().optional().transform((v) => v || null).pipe(z.iso.date().nullable()), notes: z.string().trim().max(500).optional().transform((v) => v || null) }).safeParse(Object.fromEntries(form));
+  if (!p.success) return { error: msg(p.error) };
+  const lines: { exitBillId: string; packages: number }[] = [];
+  for (const [k, v] of form.entries()) {
+    if (!k.startsWith("pk:")) continue;
+    const raw = String(v).trim().replace(/,/g, "");
+    if (raw === "") continue;
+    if (!/^\d{1,9}$/.test(raw)) return { error: "Packages must be whole numbers" };
+    lines.push({ exitBillId: k.slice(3), packages: Number(raw) });
+  }
+  let id = "";
+  try { id = (await exitBilling.createExitInvoice({ ...p.data, lines }, user, await clientMeta())).id; }
+  catch (e) { if (e instanceof AppError) return { error: e.message }; throw e; }
+  revalidatePath("/", "layout");
+  redirect(`/sales/invoices/${id}`);
 }

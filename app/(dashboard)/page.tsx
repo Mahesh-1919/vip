@@ -8,6 +8,7 @@ import { requirePermission, type CurrentUser } from "@/lib/auth";
 import { NAV } from "@/lib/nav";
 import { formatAED } from "@/lib/money";
 import { listSales, receivables } from "@/services/billing";
+import { linkSummary } from "@/services/freezone";
 import { PageHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
 import { Badge } from "@/components/ui/badge";
@@ -21,7 +22,7 @@ async function load(user: CurrentUser) {
   const can = (p: never) => user.permissions.has(p);
   const soon = new Date(Date.now() + 90 * 86400000).toISOString().slice(0, 10);
   const month = new Date().toISOString().slice(0, 7);
-  const [leave, drafts, expiring, staff, entriesM, exitsM, refund, cert, salesM, recv] = await Promise.all([
+  const [leave, drafts, expiring, staff, entriesM, exitsM, refund, cert, salesM, recv, links] = await Promise.all([
     can("hr:leave:approve" as never) ? db.select({ n: count() }).from(leaveRequests).where(eq(leaveRequests.status, "pending")) : null,
     can("hr:payroll:read" as never) ? db.select({ n: count() }).from(payrollRuns).where(eq(payrollRuns.status, "draft")) : null,
     can("hr:employee:read" as never)
@@ -35,6 +36,7 @@ async function load(user: CurrentUser) {
     can("freezone:exit:read" as never) ? db.select({ n: count() }).from(exitBills).where(and(eq(exitBills.entryCertStatus, "Pending"), eq(exitBills.billType, "EXPORT"))) : null,
     can("sales:sale:read" as never) ? listSales({ from: `${month}-01`, size: 10 }) : null,
     can("sales:invoice:read" as never) ? receivables() : null,
+    can("freezone:exit:read" as never) || can("sales:invoice:write" as never) ? linkSummary() : null,
   ]);
   const attention: Attention[] = [];
   if (leave?.[0].n) attention.push({ label: "Leave requests awaiting approval", count: leave[0].n, href: "/hr/leave?status=pending", tone: "warning" });
@@ -42,6 +44,8 @@ async function load(user: CurrentUser) {
   if (expiring?.[0].n) attention.push({ label: "Staff with a passport or visa expired or expiring within 90 days", count: expiring[0].n, href: "/hr/employees", tone: "danger" });
   if (refund?.[0].n) attention.push({ label: "Exit bills with refund pending", count: refund[0].n, href: "/freezone/exits?refund=Pending", tone: "warning" });
   if (cert?.[0].n) attention.push({ label: "Export bills awaiting the T/Entry certificate", count: cert[0].n, href: "/freezone/exits?cert=Pending&type=EXPORT", tone: "warning" });
+  if (links?.unlinked && can("freezone:exit:read" as never)) attention.push({ label: "Exit bills not yet linked to an entry bill", count: links.unlinked, href: "/freezone/exits?alloc=none", tone: "warning" });
+  if (links?.unbilledExports && can("sales:invoice:write" as never)) attention.push({ label: "Export bills with packages still to invoice", count: links.unbilledExports, href: "/sales/invoices/new", tone: "warning" });
   if (recv && recv.overdue.gt(0)) attention.push({ label: `Overdue receivables (${formatAED(recv.overdue.toFixed(2))})`, count: recv.rows.filter((r) => Number(r.overdue) > 0).length, href: "/sales/invoices?status=overdue", tone: "danger" });
   return { attention, staff: staff?.[0].n, entriesM: entriesM?.[0].n, exitsM: exitsM?.[0].n, salesM: salesM?.totals.net, outstanding: recv?.outstanding.toFixed(2) };
 }

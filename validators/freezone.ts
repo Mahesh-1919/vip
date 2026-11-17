@@ -25,6 +25,7 @@ export const exitSchema = z.object({
   exitDate: date,
   boeNo: z.string().trim().min(1, "BOE number is required").max(60),
   importerName: text(150), refNo: text(60),
+  customerId: z.string().optional().transform((v) => v || null).pipe(z.uuid().nullable()),
   billType: z.enum(BILL_TYPES),
   portOfLoading: text(80), portOfDischarge: text(80), invoiceNo: text(80),
   valueAed: amount, weightKg: amount, packages: int,
@@ -34,4 +35,11 @@ export const exitSchema = z.object({
   refundStatus: z.enum(REFUND_STATUSES),
   shippingLine: text(80), notes: text(500),
   version: z.coerce.number().int().positive().optional(),
+});
+
+export const allocationSchema = z.object({
+  exitBillId: z.uuid(), entryBillId: z.uuid("Choose the entry bill"),
+  packages: z.string().trim().regex(/^\d{1,9}$/, "Packages must be a whole number").transform(Number),
+  weightKg: amount,
+  reason: text(200),
 });

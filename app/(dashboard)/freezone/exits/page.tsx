@@ -23,7 +23,7 @@ const tone = (s: string) => (s === "Pending" ? "warning" : s === "No Need" ? "se
 export default async function ExitsPage({ searchParams }: PageProps<"/freezone/exits">) {
   const user = await requirePermission("freezone:exit:read");
   const sp = await searchParams;
-  const params = { q: one(sp.q).slice(0, 80), type: one(sp.type), cert: one(sp.cert), refund: one(sp.refund), from: date(one(sp.from)), to: date(one(sp.to)), size: one(sp.size) };
+  const params = { q: one(sp.q).slice(0, 80), type: one(sp.type), cert: one(sp.cert), refund: one(sp.refund), alloc: one(sp.alloc), billing: one(sp.billing), from: date(one(sp.from)), to: date(one(sp.to)), size: one(sp.size) };
   const res = await listExits({ ...params, from: params.from || undefined, to: params.to || undefined, size: Number(params.size) || 25, page: Number(one(sp.page)) || 1 });
   const keep = { ...params, size: String(res.size) };
   const qs = new URLSearchParams(Object.entries(params).filter(([k, v]) => v && k !== "size") as [string, string][]).toString();
@@ -48,6 +48,9 @@ export default async function ExitsPage({ searchParams }: PageProps<"/freezone/e
     { key: "ca", header: "Cheque Amount", align: "right", cell: ({ e }) => (e.chequeAmount ? num(e.chequeAmount) : "") },
     { key: "ref2", header: "Refund Status", cell: ({ e }) => <Badge variant={tone(e.refundStatus)}>{e.refundStatus}</Badge> },
     { key: "ship", header: "Shipping", cell: ({ e }) => e.shippingLine },
+    { key: "cust", header: "Customer", cell: (r) => r.customer ?? <span className="text-xs text-warning">not linked</span> },
+    { key: "link", header: "Linked to entries", cell: ({ e, allocated }) => <Badge variant={allocated === 0 ? "warning" : allocated >= e.packages ? "success" : "info"}>{allocated === 0 ? "Unlinked" : allocated >= e.packages ? "Fully" : `${num(allocated, 0)}/${num(e.packages, 0)}`}</Badge> },
+    { key: "inv", header: "Invoiced", cell: ({ e, billedPkgs }) => e.billType !== "EXPORT" ? <span className="text-muted-foreground">n/a</span> : Number(billedPkgs) === 0 ? <Badge variant="warning">Not invoiced</Badge> : Number(billedPkgs) >= e.packages ? <Badge variant="success">Invoiced</Badge> : <Badge variant="info">{num(billedPkgs, 0)}/{num(e.packages, 0)}</Badge> },
   ];
   return (
     <div className="flex flex-col gap-4">
@@ -63,6 +66,8 @@ export default async function ExitsPage({ searchParams }: PageProps<"/freezone/e
         <NativeSelect name="type" defaultValue={params.type} wrapperClassName="w-36"><NativeSelectOption value="">All types</NativeSelectOption>{BILL_TYPES.map((t) => <NativeSelectOption key={t} value={t}>{t}</NativeSelectOption>)}</NativeSelect>
         <NativeSelect name="cert" defaultValue={params.cert} wrapperClassName="w-44"><NativeSelectOption value="">Any T/Entry cert</NativeSelectOption>{CERT_STATUSES.map((t) => <NativeSelectOption key={t} value={t}>Cert: {t}</NativeSelectOption>)}</NativeSelect>
         <NativeSelect name="refund" defaultValue={params.refund} wrapperClassName="w-48"><NativeSelectOption value="">Any refund status</NativeSelectOption>{REFUND_STATUSES.map((t) => <NativeSelectOption key={t} value={t}>Refund: {t}</NativeSelectOption>)}</NativeSelect>
+        <NativeSelect name="alloc" defaultValue={params.alloc} wrapperClassName="w-44"><NativeSelectOption value="">Any entry link</NativeSelectOption><NativeSelectOption value="none">Unlinked</NativeSelectOption><NativeSelectOption value="partial">Partly linked</NativeSelectOption><NativeSelectOption value="full">Fully linked</NativeSelectOption></NativeSelect>
+        <NativeSelect name="billing" defaultValue={params.billing} wrapperClassName="w-44"><NativeSelectOption value="">Any invoicing</NativeSelectOption><NativeSelectOption value="none">Not invoiced</NativeSelectOption><NativeSelectOption value="partial">Partly invoiced</NativeSelectOption><NativeSelectOption value="full">Fully invoiced</NativeSelectOption></NativeSelect>
         <Input type="date" name="from" defaultValue={params.from} aria-label="From" className="w-40" /><Input type="date" name="to" defaultValue={params.to} aria-label="To" className="w-40" />
         <Button variant="outline" type="submit">Apply</Button>
       </FilterBar>

@@ -7,7 +7,7 @@ import { todayISO } from "@/lib/dates";
 import { AppError } from "@/lib/errors";
 import { D, toDb } from "@/lib/money";
 import { nextNumber } from "@/lib/numbering";
-import { invoiceTotals, lineAmounts } from "@/lib/vat";
+import { amountsFromNet, invoiceTotals, lineAmounts } from "@/lib/vat";
 import type { CurrentUser } from "@/lib/auth";
 import { getCompany } from "@/services/company";
 
@@ -53,8 +53,9 @@ export async function saveSale(id: string | null, i: SaleInput, version: number 
   });
 }
 
-const saleTotalSql = sql<string>`coalesce((select sum(round(l.qty * l.unit_price, 2) + round(round(l.qty * l.unit_price, 2) * l.vat_rate / 100, 2)) from sale_lines l where l.sale_id = "sales"."id"), 0)`;
-const saleNetSql = sql<string>`coalesce((select sum(round(l.qty * l.unit_price, 2)) from sale_lines l where l.sale_id = "sales"."id"), 0)`;
+const netExpr = "coalesce(l.net_override, round(l.qty * l.unit_price, 2))";
+const saleTotalSql = sql<string>`coalesce((select sum(${sql.raw(netExpr)} + round(${sql.raw(netExpr)} * l.vat_rate / 100, 2)) from sale_lines l where l.sale_id = "sales"."id"), 0)`;
+const saleNetSql = sql<string>`coalesce((select sum(${sql.raw(netExpr)}) from sale_lines l where l.sale_id = "sales"."id"), 0)`;
 
 export type SaleFilter = { q?: string; customerId?: string; invoiced?: string; from?: string; to?: string; page?: number; size?: number };
 
@@ -76,12 +77,16 @@ export async function listSales(f: SaleFilter) {
   return { rows, total: tot.total, totals: tot, page, size, pages: Math.max(1, Math.ceil(tot.total / size)) };
 }
 
+/** Net/VAT/total of a sale line, honouring an exact net override. */
+export const amountsOf = (l: { qty: string; unitPrice: string; vatRate: string; netOverride: string | null }) =>
+  l.netOverride !== null ? amountsFromNet(l.netOverride, l.vatRate) : lineAmounts(l.qty, l.unitPrice, l.vatRate);
+
 export async function getSale(id: string) {
   const [r] = await db.select({ s: sales, customer: customers }).from(sales).innerJoin(customers, eq(customers.id, sales.customerId)).where(eq(sales.id, id));
   if (!r) return null;
   const lines = await db.select().from(saleLines).where(eq(saleLines.saleId, id)).orderBy(asc(saleLines.description));
   const [inv] = await db.select({ id: invoices.id, number: invoices.number }).from(invoices).where(eq(invoices.saleId, id));
-  const calc = lines.map((l) => lineAmounts(l.qty, l.unitPrice, l.vatRate));
+  const calc = lines.map(amountsOf);
   const t = invoiceTotals(calc, 1);
   return { ...r, lines, invoice: inv ?? null, totals: t };
 }
@@ -98,7 +103,7 @@ export async function createInvoice(i: { saleId: string; issueDate: string; dueD
     const [cu] = await tx.select().from(customers).where(eq(customers.id, s.customerId));
     const lines = await tx.select().from(saleLines).where(eq(saleLines.saleId, s.id));
     if (!lines.length) throw new AppError(422, "The sale has no lines");
-    const built = lines.map((l) => { const a = lineAmounts(l.qty, l.unitPrice, l.vatRate); return { description: l.description, qty: l.qty, unitPrice: l.unitPrice, vatRate: l.vatRate, net: a.net.toFixed(2), vat: a.vat.toFixed(2), total: a.total.toFixed(2) }; });
+    const built = lines.map((l) => { const a = amountsOf(l); return { description: l.description, qty: l.qty, unitPrice: l.unitPrice, exitBillId: l.exitBillId, vatRate: l.vatRate, net: a.net.toFixed(2), vat: a.vat.toFixed(2), total: a.total.toFixed(2) }; });
     const t = invoiceTotals(built, 1);
     const year = i.issueDate.slice(0, 4);
     const number = await nextNumber(tx, `invoice_${year}`, `INV-${year}-`, 4);

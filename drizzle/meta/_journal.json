@@ -29,6 +29,20 @@
       "when": 1794934707369,
       "tag": "0003_sales_guards",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794935828052,
+      "tag": "0004_exit_links",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794935828883,
+      "tag": "0005_exit_links_guards",
+      "breakpoints": true
     }
   ]
 }

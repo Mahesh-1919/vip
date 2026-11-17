@@ -42,7 +42,7 @@ export default async function InvoicesPage({ searchParams }: PageProps<"/sales/i
   ];
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader title="Invoices" description={`Number of records: ${res.total}. Tax invoices are created from a sale.`} actions={<a href={`/api/sales/export?sheet=invoices&${qs}`} className={buttonVariants({ variant: "outline" })}><Download size={16} />CSV</a>} />
+      <PageHeader title="Invoices" description={`Number of records: ${res.total}. Goods exported are invoiced from the export bills; other sales are invoiced from the sale.`} actions={<><a href={`/api/sales/export?sheet=invoices&${qs}`} className={buttonVariants({ variant: "outline" })}><Download size={16} />CSV</a><Link href="/sales/invoices/new" className={buttonVariants()}>Invoice export bills</Link></>} />
       <div className="grid gap-3 sm:grid-cols-3"><StatCard label="Outstanding (AED)" value={formatAED(recv.outstanding.toFixed(2))} /><StatCard label="Overdue (AED)" value={formatAED(recv.overdue.toFixed(2))} tone={recv.overdue.gt(0) ? "danger" : undefined} href="/sales/invoices?status=overdue" /><StatCard label="Customers owing" value={recv.rows.length} /></div>
       <FilterBar>
         <label className="flex items-center gap-2 text-sm">Show <NativeSelect name="size" defaultValue={String(res.size)} wrapperClassName="w-24">{PAGE_SIZES.map((s) => <NativeSelectOption key={s} value={s}>{s}</NativeSelectOption>)}</NativeSelect> entries</label>

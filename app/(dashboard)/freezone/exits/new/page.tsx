@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { requirePermission } from "@/lib/auth";
+import { customerOptions } from "@/services/billing";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent } from "@/components/ui/card";
 import { ExitForm } from "../exit-form";
@@ -11,7 +12,7 @@ export default async function NewExitPage() {
   return (
     <div className="max-w-4xl flex flex-col gap-5">
       <PageHeader title="New exit bill" back={{ href: "/freezone/exits", label: "Exit bills" }} />
-      <Card><CardContent><ExitForm /></CardContent></Card>
+      <Card><CardContent><ExitForm customers={await customerOptions()} /></CardContent></Card>
     </div>
   );
 }

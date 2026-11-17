@@ -7,7 +7,7 @@ import { saveExitAction } from "./actions";
 
 const opts = (a: readonly string[]) => a.map((v) => ({ value: v, label: v }));
 
-export function ExitForm({ exit }: { exit?: typeof exitBills.$inferSelect }) {
+export function ExitForm({ exit, customers }: { exit?: typeof exitBills.$inferSelect; customers: { id: string; name: string }[] }) {
   const action = saveExitAction.bind(null, exit?.id ?? null) as (s: ActionState, f: FormData) => Promise<ActionState>;
   return (
     <ActionForm action={action} submit={exit ? "Save changes" : "Add exit bill"} resetOnSuccess={!exit} className="grid gap-4 sm:grid-cols-3">
@@ -15,7 +15,8 @@ export function ExitForm({ exit }: { exit?: typeof exitBills.$inferSelect }) {
       <TextField name="exitDate" label="Date" type="date" required defaultValue={exit?.exitDate} />
       <TextField name="boeNo" label="BOE no." required defaultValue={exit?.boeNo} placeholder="1-3-60-1-26-847" />
       <SelectField name="billType" label="Bill type" defaultValue={exit?.billType ?? "EXPORT"} options={opts(BILL_TYPES)} />
-      <TextField className="sm:col-span-2" name="importerName" label="Importer name" defaultValue={exit?.importerName ?? ""} />
+      <TextField name="importerName" label="Importer name" defaultValue={exit?.importerName ?? ""} hint="As printed on the bill." />
+      <SelectField name="customerId" label="Customer" defaultValue={exit?.customerId ?? ""} placeholder="— not linked —" options={customers.map((c) => ({ value: c.id, label: c.name }))} hint="Needed to invoice an export bill." />
       <TextField name="refNo" label="Ref no." defaultValue={exit?.refNo ?? ""} />
       <TextField name="portOfLoading" label="Port of loading" defaultValue={exit?.portOfLoading ?? ""} />
       <TextField name="portOfDischarge" label="Port of discharge" defaultValue={exit?.portOfDischarge ?? ""} />

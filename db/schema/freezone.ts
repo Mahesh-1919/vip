@@ -1,6 +1,7 @@
 import { pgTable, text, numeric, integer, date, uuid, index, uniqueIndex } from "drizzle-orm/pg-core";
 import { id, createdAt, updatedAt, version } from "./_columns";
 import { users } from "./auth";
+import { customers } from "./sales";
 
 /** Free Zone Entry Bill Sheet: one row per bill of entry (goods coming into the zone). */
 export const entryBills = pgTable(
@@ -42,6 +43,8 @@ export const exitBills = pgTable(
     exitDate: date({ mode: "string" }).notNull(),
     boeNo: text().notNull(),
     importerName: text(),
+    /** The buyer. Needed to invoice an export bill. */
+    customerId: uuid().references(() => customers.id),
     refNo: text(),
     /** IMPORT | EXPORT */
     billType: text().notNull().default("EXPORT"),
@@ -68,4 +71,24 @@ export const exitBills = pgTable(
     updatedAt: updatedAt(),
   },
   (t) => [uniqueIndex("exit_boe_no_uq").on(t.boeNo), index("exit_date_idx").on(t.exitDate), index("exit_importer_idx").on(t.importerName)],
+);
+
+/**
+ * Which entry bill(s) an exit bill's goods came from. Many-to-many:
+ * one entry can feed several exits (several customers), one exit can draw on several entries.
+ */
+export const billAllocations = pgTable(
+  "bill_allocations",
+  {
+    id: id(),
+    exitBillId: uuid().notNull().references(() => exitBills.id, { onDelete: "restrict" }),
+    entryBillId: uuid().notNull().references(() => entryBills.id, { onDelete: "restrict" }),
+    packages: integer().notNull(),
+    weightKg: numeric({ precision: 14, scale: 2 }).notNull().default("0"),
+    /** Required when this allocation takes the entry past its package count (tolerance zone). */
+    overReason: text(),
+    createdBy: uuid().references(() => users.id),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("alloc_pair_uq").on(t.exitBillId, t.entryBillId), index("alloc_entry_idx").on(t.entryBillId)],
 );

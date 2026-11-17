@@ -21,6 +21,13 @@ export function lineAmounts(qty: Decimal.Value, unitPrice: Decimal.Value, ratePe
   return { net, vat, total: net.plus(vat) };
 }
 
+/** VAT on a net amount that is already exact (e.g. a partial bill of an export). */
+export function amountsFromNet(net: Decimal.Value, ratePercent: Decimal.Value) {
+  const n = r2(new Decimal(net));
+  const vat = r2(n.times(ratePercent).div(100));
+  return { net: n, vat, total: n.plus(vat) };
+}
+
 export function invoiceTotals(lines: { net: Decimal.Value; vat: Decimal.Value }[], exchangeRate: Decimal.Value) {
   const subtotal = lines.reduce((s, l) => s.plus(l.net), new Decimal(0));
   const vatTotal = lines.reduce((s, l) => s.plus(l.vat), new Decimal(0));

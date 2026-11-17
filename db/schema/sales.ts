@@ -43,11 +43,15 @@ export const saleLines = pgTable(
     saleId: uuid().notNull().references(() => sales.id, { onDelete: "cascade" }),
     description: text().notNull(),
     qty: numeric({ precision: 14, scale: 2 }).notNull(),
-    unitPrice: numeric({ precision: 14, scale: 2 }).notNull(),
+    unitPrice: numeric({ precision: 14, scale: 4 }).notNull(),
+    /** Export bill this goods line bills (packages = qty). FK added in SQL (avoids a circular import). */
+    exitBillId: uuid(),
+    /** Exact net amount when it is not simply qty x price (partial billing of an export bill). */
+    netOverride: numeric({ precision: 14, scale: 2 }),
     /** 5 (standard rated) or 0 (zero rated / exempt). */
     vatRate: numeric({ precision: 5, scale: 2 }).notNull().default("5"),
   },
-  (t) => [index("sale_lines_sale_idx").on(t.saleId)],
+  (t) => [index("sale_lines_sale_idx").on(t.saleId), index("sale_lines_exit_idx").on(t.exitBillId)],
 );
 
 export type InvoiceParties = {
@@ -84,13 +88,14 @@ export const invoiceLines = pgTable(
     invoiceId: uuid().notNull().references(() => invoices.id, { onDelete: "restrict" }),
     description: text().notNull(),
     qty: numeric({ precision: 14, scale: 2 }).notNull(),
-    unitPrice: numeric({ precision: 14, scale: 2 }).notNull(),
+    unitPrice: numeric({ precision: 14, scale: 4 }).notNull(),
+    exitBillId: uuid(),
     vatRate: numeric({ precision: 5, scale: 2 }).notNull(),
     net: numeric({ precision: 14, scale: 2 }).notNull(),
     vat: numeric({ precision: 14, scale: 2 }).notNull(),
     total: numeric({ precision: 14, scale: 2 }).notNull(),
   },
-  (t) => [index("invoice_lines_invoice_idx").on(t.invoiceId)],
+  (t) => [index("invoice_lines_invoice_idx").on(t.invoiceId), index("invoice_lines_exit_idx").on(t.exitBillId)],
 );
 
 export const payments = pgTable(

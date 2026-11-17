@@ -8,19 +8,21 @@ import { DataTable, type Column } from "@/components/data-table";
 import { FilterBar } from "@/components/filter-bar";
 import { PageHeader } from "@/components/page-header";
 import { Pagination } from "@/components/pagination";
+import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 
 export const metadata: Metadata = { title: "Entry bills" };
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
+const n = (v: string | number) => new Intl.NumberFormat("en-US").format(Number(v));
 const num = (v: string | number, d = 2) => new Intl.NumberFormat("en-US", { minimumFractionDigits: d, maximumFractionDigits: d }).format(Number(v));
 const date = (v: string) => (/^\d{4}-\d{2}-\d{2}$/.test(v) ? v : "");
 
 export default async function EntriesPage({ searchParams }: PageProps<"/freezone/entries">) {
   const user = await requirePermission("freezone:entry:read");
   const sp = await searchParams;
-  const params = { q: one(sp.q).slice(0, 80), agent: one(sp.agent), origin: one(sp.origin).slice(0, 10), from: date(one(sp.from)), to: date(one(sp.to)), size: one(sp.size) };
+  const params = { q: one(sp.q).slice(0, 80), agent: one(sp.agent), origin: one(sp.origin).slice(0, 10), open: one(sp.open), from: date(one(sp.from)), to: date(one(sp.to)), size: one(sp.size) };
   const [res, agents] = await Promise.all([
     listEntries({ ...params, from: params.from || undefined, to: params.to || undefined, size: Number(params.size) || 25, page: Number(one(sp.page)) || 1 }),
     entryAgents(),
@@ -44,6 +46,8 @@ export default async function EntriesPage({ searchParams }: PageProps<"/freezone
     { key: "stock", header: "Stock", cell: ({ e }) => e.originCountry },
     { key: "marks", header: "Marks & Numbers", className: "max-w-64 whitespace-normal font-mono text-xs", cell: ({ e }) => e.marksNumbers },
     { key: "line", header: "Line", cell: ({ e }) => e.line },
+    { key: "exp", header: "Exported", align: "right", cell: ({ exported }) => exported ? `${n(exported)}` : <span className="text-muted-foreground">0</span> },
+    { key: "rem", header: "Remaining", align: "right", cell: ({ e, exported }) => { const r = e.packages - exported; return <Badge variant={r < 0 ? "danger" : r === 0 ? "secondary" : exported > 0 ? "warning" : "success"}>{n(r)}</Badge>; } },
   ];
   return (
     <div className="flex flex-col gap-4">
@@ -58,6 +62,7 @@ export default async function EntriesPage({ searchParams }: PageProps<"/freezone
         <Input name="q" defaultValue={params.q} placeholder="Search bill, agent, invoice, container…" className="w-72" />
         <NativeSelect name="agent" defaultValue={params.agent} wrapperClassName="w-56"><NativeSelectOption value="">All agents</NativeSelectOption>{agents.map((a) => <NativeSelectOption key={a} value={a}>{a}</NativeSelectOption>)}</NativeSelect>
         <Input name="origin" defaultValue={params.origin} placeholder="Stock (CN…)" className="w-28" />
+        <label className="flex items-center gap-1.5 text-sm"><input type="checkbox" name="open" value="1" defaultChecked={params.open === "1"} /> Stock left only</label>
         <Input type="date" name="from" defaultValue={params.from} aria-label="From" className="w-40" /><Input type="date" name="to" defaultValue={params.to} aria-label="To" className="w-40" />
         <Button variant="outline" type="submit">Apply</Button>
       </FilterBar>

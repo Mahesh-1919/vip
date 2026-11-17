@@ -5,6 +5,10 @@ import { roles, rolePermissions, users, departments, salaryComponents, employees
 import { shifts, shiftAssignments, holidayCalendars, holidays, leaveTypes, leaveBalances, leaveRequests, attendance } from "./schema";
 import { entryBills, exitBills, customers, companySettings, saleLines } from "./schema";
 import * as billing from "../services/billing";
+import * as freezoneSvc from "../services/freezone";
+import * as exitBilling from "../services/exit-billing";
+import { billAllocations } from "./schema";
+import { asc } from "drizzle-orm";
 import { encryptField } from "../lib/crypto";
 import { DEFAULT_ROLES } from "../lib/rbac";
 import { hashPassword } from "../lib/password";
@@ -209,6 +213,51 @@ async function seedSales() {
   void saleLines;
 }
 
+async function seedLinks() {
+  const [{ n }] = await db.select({ n: dsql<number>`count(*)::int` }).from(billAllocations);
+  if (n > 0) return;
+  // 1) Link each exit's importer name to a customer (creating the ones the sheets mention).
+  const existing = await db.select().from(customers);
+  const names = [...new Set((await db.select({ n: exitBills.importerName }).from(exitBills)).map((r) => r.n).filter((x): x is string => !!x))];
+  for (const name of names) if (!existing.find((c) => c.name === name)) await db.insert(customers).values({ name, creditDays: 30, address: "Africa" });
+  const cus = await db.select().from(customers);
+  for (const c of cus) await db.update(exitBills).set({ customerId: c.id }).where(eq(exitBills.importerName, c.name));
+
+  // 2) Trace exits back to entries, oldest stock first. Some exits stay unlinked on purpose (the "unlinked" queue).
+  const [op] = await db.select().from(users).where(eq(users.email, "operations@erp.local"));
+  const ops = { id: op.id, email: op.email, role: { key: "operations_manager" }, permissions: new Set() } as never;
+  const meta = { ip: null, userAgent: null };
+  const entries = await db.select().from(entryBills).orderBy(asc(entryBills.billDate));
+  const left = new Map(entries.map((e) => [e.id, e.packages]));
+  const exits = await db.select().from(exitBills).orderBy(asc(exitBills.exitDate));
+  let k = 0;
+  for (const x of exits) {
+    if (++k % 5 === 0 || x.packages <= 1) continue;
+    let need = x.packages;
+    for (const e of entries) {
+      const have = left.get(e.id) ?? 0;
+      if (need <= 0) break;
+      if (have <= 0 || e.billDate > x.exitDate) continue;
+      const take = Math.min(have, need);
+      await freezoneSvc.allocate({ exitBillId: x.id, entryBillId: e.id, packages: take, weightKg: "0", reason: null }, ops, meta);
+      left.set(e.id, have - take); need -= take;
+    }
+  }
+
+  // 3) A few invoices from export bills: one in full, one in two parts, one consolidated for a customer.
+  const [sm] = await db.select().from(users).where(eq(users.email, "sales@erp.local"));
+  const sales = { id: sm.id, email: sm.email, role: { key: "sales_manager" }, permissions: new Set() } as never;
+  const exportsByCustomer = new Map<string, (typeof exits)[number][]>();
+  for (const x of exits) if (x.billType === "EXPORT" && x.customerId && x.packages > 0) exportsByCustomer.set(x.customerId, [...(exportsByCustomer.get(x.customerId) ?? []), x]);
+  const groups = [...exportsByCustomer.entries()].filter(([, v]) => v.length > 0);
+  const day = (d: number) => new Date(Date.now() + d * 86400000).toISOString().slice(0, 10);
+  if (groups[0]) { const [cid, xs] = groups[0]; await exitBilling.createExitInvoice({ customerId: cid, issueDate: day(-25), dueDate: null, notes: null, lines: [{ exitBillId: xs[0].id, packages: xs[0].packages }] }, sales, meta); }
+  if (groups[1]) { const [cid, xs] = groups[1]; const x = xs[0]; const part = Math.max(1, Math.floor(x.packages * 0.4));
+    const inv = await exitBilling.createExitInvoice({ customerId: cid, issueDate: day(-18), dueDate: null, notes: "Part 1 of 2", lines: [{ exitBillId: x.id, packages: part }] }, sales, meta);
+    await billing.recordPayment({ invoiceId: inv.id, paymentDate: day(-6), amount: inv.total, method: "bank_transfer", reference: "TT" + Math.floor(Math.random() * 90000 + 10000) }, sales, meta); }
+  if (groups[2] && groups[2][1].length > 1) { const [cid, xs] = groups[2]; await exitBilling.createExitInvoice({ customerId: cid, issueDate: day(-9), dueDate: null, notes: "Consolidated", lines: xs.slice(0, 2).map((x) => ({ exitBillId: x.id, packages: x.packages })) }, sales, meta); }
+}
+
 async function main() {
   if (process.env.NODE_ENV === "production") throw new Error("Refusing to seed demo data in production");
   const password = process.env.SEED_PASSWORD ?? "ChangeMe@123";
@@ -232,6 +281,7 @@ async function main() {
   await seedAttendance();
   await seedFreeZone();
   await seedSales();
+  await seedLinks();
   console.log(`Seeded ${DEFAULT_ROLES.length} roles and ${USERS.length} users (password: ${password})`);
 }
 

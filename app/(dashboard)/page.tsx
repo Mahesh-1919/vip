@@ -91,7 +91,7 @@ export default async function DashboardPage() {
     d.payrollKnown && <StatCard key="p" label="Latest payroll (net)" value={d.payroll ? formatAED(d.payroll.net) : "—"} hint={d.payroll ? new Date(d.payroll.year, d.payroll.month - 1).toLocaleString("en-GB", { month: "long", year: "numeric" }) : "No finalised payroll yet"} href="/hr/payroll" icon={<Wallet />} />,
     d.entriesM !== undefined && <StatCard key="e" label="Entry bills this month" value={d.entriesM} href="/freezone/entries" icon={<PackagePlus />} />,
     d.exitsM !== undefined && <StatCard key="x" label="Exit bills this month" value={d.exitsM} href="/freezone/exits" icon={<PackageMinus />} />,
-    d.stockPackages !== undefined && <StatCard key="k" label="Packages in the zone" value={n(d.stockPackages)} hint="Imported and not yet exported" href="/freezone/entries?open=1" icon={<Boxes />} />,
+    d.stockPackages !== undefined && <StatCard key="k" featured label="Packages in the zone" value={n(d.stockPackages)} hint="Imported and not yet exported" href="/freezone/entries?open=1" icon={<Boxes />} />,
     d.salesM !== undefined && <StatCard key="m" label="Sales this month (net)" value={formatAED(d.salesM)} href="/sales" icon={<ShoppingCart />} />,
     d.outstanding !== undefined && <StatCard key="o" label="Outstanding receivables" value={formatAED(d.outstanding)} href="/sales/invoices" icon={<ReceiptText />} />,
     d.overdue !== undefined && <StatCard key="d" label="Overdue receivables" value={formatAED(d.overdue)} tone={Number(d.overdue) > 0 ? "danger" : undefined} href="/sales/invoices?status=overdue" icon={<CircleAlert />} />,

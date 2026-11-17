@@ -11,7 +11,6 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Separator } from "@/components/ui/separator";
 import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarInset, SidebarMenu, SidebarMenuButton,
   SidebarMenuItem, SidebarProvider, SidebarRail, SidebarTrigger, useSidebar,
@@ -54,7 +53,7 @@ export function AppFrame({ appName, companyName, sections, user, logout, childre
         <SidebarHeader>
           <SidebarMenu><SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link href="/"><span className="grid size-8 shrink-0 place-items-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground"><Boxes className="size-[18px]" /></span><span className="grid min-w-0 leading-tight"><span className="truncate text-sm font-semibold text-white">{appName}</span><span className="truncate text-[11px] font-normal text-sidebar-foreground/70">{companyName}</span></span></Link>
+              <Link href="/"><span className="grid size-8 shrink-0 place-items-center rounded-full bg-sidebar-primary text-sidebar-primary-foreground"><Boxes className="size-[18px]" /></span><span className="grid min-w-0 leading-tight"><span className="truncate text-base font-semibold text-foreground">{appName}</span><span className="truncate text-[11px] font-normal text-sidebar-foreground/70">{companyName}</span></span></Link>
             </SidebarMenuButton>
           </SidebarMenuItem></SidebarMenu>
         </SidebarHeader>
@@ -91,10 +90,9 @@ export function AppFrame({ appName, companyName, sections, user, logout, childre
       </Sidebar>
 
       <SidebarInset className="min-w-0">
-        <header className="sticky top-0 z-20 flex h-14 items-center gap-2 border-b bg-background/85 px-4 backdrop-blur">
+        <header className="sticky top-0 z-20 flex h-14 items-center gap-2 bg-background/85 px-4 backdrop-blur">
           <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="mr-1 h-4" />
-          <Breadcrumb className="min-w-0 flex-1">
+                    <Breadcrumb className="min-w-0 flex-1">
             <BreadcrumbList className="flex-nowrap">
               {segs.length === 0 ? <BreadcrumbItem><BreadcrumbPage>Dashboard</BreadcrumbPage></BreadcrumbItem> : segs.map((s, i) => (
                 <Fragment key={i}>
@@ -107,7 +105,7 @@ export function AppFrame({ appName, companyName, sections, user, logout, childre
             </BreadcrumbList>
           </Breadcrumb>
           <DropdownMenu>
-            <DropdownMenuTrigger className="flex items-center gap-2 rounded-full py-1 pr-2 pl-1 outline-none hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring">
+            <DropdownMenuTrigger className="flex items-center gap-2 rounded-full bg-card py-1.5 pr-4 pl-1.5 shadow-xs outline-none hover:bg-card/80 focus-visible:ring-2 focus-visible:ring-ring">
               <Avatar className="size-8"><AvatarFallback className="bg-primary text-xs font-semibold text-primary-foreground">{initials}</AvatarFallback></Avatar>
               <span className="hidden text-left leading-tight sm:block"><span className="block text-sm font-medium">{user.name}</span><span className="block text-xs text-muted-foreground">{user.role}</span></span>
             </DropdownMenuTrigger>

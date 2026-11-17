@@ -13,10 +13,16 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import { DateRange } from "@/components/date-range";
+import { StatCard } from "@/components/stat-card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PaymentsChart, SalesTrendChart, TopCustomersChart } from "@/components/sales-charts";
+import { salesInsights } from "@/services/sales-insights";
+import { TrendingUp, TrendingDown, ShoppingCart, Receipt, CalendarRange } from "lucide-react";
 
 export const metadata: Metadata = { title: "Sales" };
 export const instant = false; // session-dependent page: see (dashboard)/layout.tsx
 const one = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v) ?? "";
+const compactAed = (v: number) => "AED " + new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 }).format(v);
 const aed = (v: string | number) => new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(v));
 const date = (v: string) => (/^\d{4}-\d{2}-\d{2}$/.test(v) ? v : "");
 
@@ -24,10 +30,12 @@ export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
   const user = await requirePermission("sales:sale:read");
   const sp = await searchParams;
   const params = { q: one(sp.q).slice(0, 80), customerId: one(sp.customerId), invoiced: one(sp.invoiced), from: date(one(sp.from)), to: date(one(sp.to)), size: one(sp.size) };
-  const [res, customers] = await Promise.all([
+  const [res, customers, ins] = await Promise.all([
     listSales({ ...params, customerId: /^[0-9a-f-]{36}$/i.test(params.customerId) ? params.customerId : undefined, from: params.from || undefined, to: params.to || undefined, size: Number(params.size) || 25, page: Number(one(sp.page)) || 1 }),
     customerOptions(),
+    salesInsights(),
   ]);
+  const k = ins.kpi;
   const keep = { ...params, size: String(res.size) };
   const qs = new URLSearchParams(Object.entries(params).filter(([k, v]) => v && k !== "size") as [string, string][]).toString();
   const cols: Column<(typeof res.rows)[number]>[] = [
@@ -45,6 +53,18 @@ export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
         <a href={`/api/sales/export?sheet=sales&${qs}`} className={buttonVariants({ variant: "outline" })}><Download size={16} />CSV</a>
         {user.permissions.has("sales:sale:write") && <Link href="/sales/new" className={buttonVariants()}><Plus size={16} />New sale</Link>}
       </>} />
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard featured label="Sales this month (net)" value={compactAed(k.thisM)} icon={<ShoppingCart />}
+          hint={k.change === null ? "No sales last month" : <span className="inline-flex items-center gap-1">{k.change >= 0 ? <TrendingUp size={13} /> : <TrendingDown size={13} />}{Math.abs(k.change).toFixed(1)}% vs last month</span>} />
+        <StatCard label="Last 12 months (net)" value={compactAed(k.year)} icon={<CalendarRange />} hint={`${k.count} sales`} />
+        <StatCard label="Average sale (net)" value={compactAed(k.avg)} icon={<Receipt />} hint="Last 12 months" />
+        <StatCard label="Not yet invoiced" value={compactAed(ins.series.reduce((a, x) => a + x.open, 0))} tone="warning" icon={<TrendingUp />} hint="Sales waiting for an invoice" />
+      </div>
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <Card className="min-w-0 gap-3"><CardHeader><CardTitle>Sales history</CardTitle><CardDescription>Net sales per month, last 12 months</CardDescription></CardHeader><CardContent><SalesTrendChart data={ins.series} /></CardContent></Card>
+        <Card className="min-w-0 gap-3"><CardHeader><CardTitle>Payments</CardTitle><CardDescription>Invoiced money: collected vs waiting</CardDescription></CardHeader><CardContent><PaymentsChart data={ins.payments} /></CardContent></Card>
+      </div>
+      {ins.top.length > 0 && <Card className="min-w-0 gap-3"><CardHeader><CardTitle>Top customers</CardTitle><CardDescription>Net sales, last 12 months</CardDescription></CardHeader><CardContent><TopCustomersChart data={ins.top} /></CardContent></Card>}
       <FilterBar>
         <FilterField label="Search"><Input name="q" defaultValue={params.q} placeholder="Ref, customer, bill…" className="w-64" /></FilterField>
         <FilterField label="Customer"><NativeSelect name="customerId" defaultValue={params.customerId} wrapperClassName="w-56"><NativeSelectOption value="">All customers</NativeSelectOption>{customers.map((c) => <NativeSelectOption key={c.id} value={c.id}>{c.name}</NativeSelectOption>)}</NativeSelect></FilterField>

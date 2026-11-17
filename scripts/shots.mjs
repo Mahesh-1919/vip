@@ -15,6 +15,6 @@ for (const p of pages) {
   await page.goto(base + p, { waitUntil: "networkidle" });
   await page.waitForTimeout(400);
   const name = (p === "/" ? "home" : p.slice(1).replace(/[\/?=&]/g, "_"));
-  await page.screenshot({ path: `${out}/${name}-${mode}-${scheme}.png`, fullPage: false });
+  await page.screenshot({ path: `${out}/${name}-${mode}-${scheme}.png`, fullPage: !!process.env.FULL });
 }
 await browser.close();

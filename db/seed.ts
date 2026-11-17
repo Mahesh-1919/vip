@@ -247,8 +247,11 @@ async function seedLinks() {
   // 3) A few invoices from export bills: one in full, one in two parts, one consolidated for a customer.
   const [sm] = await db.select().from(users).where(eq(users.email, "sales@erp.local"));
   const sales = { id: sm.id, email: sm.email, role: { key: "sales_manager" }, permissions: new Set() } as never;
+  // Only fully linked export bills can be invoiced (stock rule).
+  const linked = new Map<string, number>();
+  for (const a of await db.select().from(billAllocations)) linked.set(a.exitBillId, (linked.get(a.exitBillId) ?? 0) + a.packages);
   const exportsByCustomer = new Map<string, (typeof exits)[number][]>();
-  for (const x of exits) if (x.billType === "EXPORT" && x.customerId && x.packages > 0) exportsByCustomer.set(x.customerId, [...(exportsByCustomer.get(x.customerId) ?? []), x]);
+  for (const x of exits) if (x.billType === "EXPORT" && x.customerId && x.packages > 0 && (linked.get(x.id) ?? 0) >= x.packages) exportsByCustomer.set(x.customerId, [...(exportsByCustomer.get(x.customerId) ?? []), x]);
   const groups = [...exportsByCustomer.entries()].filter(([, v]) => v.length > 0);
   const day = (d: number) => new Date(Date.now() + d * 86400000).toISOString().slice(0, 10);
   if (groups[0]) { const [cid, xs] = groups[0]; await exitBilling.createExitInvoice({ customerId: cid, issueDate: day(-25), dueDate: null, notes: null, lines: [{ exitBillId: xs[0].id, packages: xs[0].packages }] }, sales, meta); }

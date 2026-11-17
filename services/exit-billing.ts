@@ -1,7 +1,7 @@
 import "server-only";
 import { and, asc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { customers, exitBills, invoiceLines, invoices, saleLines, sales, type InvoiceParties } from "@/db/schema";
+import { billAllocations, customers, exitBills, invoiceLines, invoices, saleLines, sales, type InvoiceParties } from "@/db/schema";
 import { audit } from "@/lib/audit";
 import { AppError } from "@/lib/errors";
 import { D, Decimal } from "@/lib/money";
@@ -20,8 +20,10 @@ export async function invoiceableExits(customerId: string) {
     e: exitBills,
     billedPkgs: sql<string>`(select coalesce(sum(l.qty), 0) from invoice_lines l where l.exit_bill_id = "exit_bills"."id")`,
     billedValue: sql<string>`(select coalesce(sum(l.net), 0) from invoice_lines l where l.exit_bill_id = "exit_bills"."id")`,
+    allocated: sql<number>`(select coalesce(sum(a.packages), 0) from bill_allocations a where a.exit_bill_id = "exit_bills"."id")::int`,
   }).from(exitBills).where(and(eq(exitBills.customerId, customerId), eq(exitBills.billType, "EXPORT"))).orderBy(asc(exitBills.exitDate), asc(exitBills.boeNo));
-  return rows.map((r) => ({ ...r, remainingPkgs: r.e.packages - Number(r.billedPkgs), remainingValue: D(r.e.valueAed).minus(r.billedValue) })).filter((r) => r.remainingPkgs > 0);
+  // Only packages traced to stock (linked to entry bills) can be invoiced.
+  return rows.map((r) => ({ ...r, remainingPkgs: r.e.packages - Number(r.billedPkgs), invoiceablePkgs: Math.max(0, Math.min(r.allocated, r.e.packages) - Number(r.billedPkgs)), remainingValue: D(r.e.valueAed).minus(r.billedValue) })).filter((r) => r.remainingPkgs > 0);
 }
 
 export const customersWithExports = () =>
@@ -63,6 +65,12 @@ export async function createExitInvoice(
       const [b] = await tx.select({ pk: sql<string>`coalesce(sum(${invoiceLines.qty}), 0)`, val: sql<string>`coalesce(sum(${invoiceLines.net}), 0)` }).from(invoiceLines).where(eq(invoiceLines.exitBillId, x.id));
       const remaining = x.packages - Number(b.pk);
       if (want > remaining) throw new AppError(409, `${x.boeNo}: only ${remaining} of ${x.packages} packages left to invoice (${Number(b.pk)} already billed)`);
+      // Stock rule: you can only invoice goods that are traced to an entry bill.
+      const [al] = await tx.select({ n: sql<number>`coalesce(sum(${billAllocations.packages}), 0)::int` }).from(billAllocations).where(eq(billAllocations.exitBillId, x.id));
+      const invoiceable = Math.min(al.n, x.packages) - Number(b.pk);
+      if (want > invoiceable) throw new AppError(409, al.n === 0
+        ? `${x.boeNo}: not linked to any entry bill. Link the goods to the stock they came from before invoicing.`
+        : `${x.boeNo}: only ${Math.max(0, invoiceable)} packages are linked to stock and not yet invoiced (${al.n} of ${x.packages} linked). Link the rest to an entry bill first.`);
       const net = want === remaining ? D(x.valueAed).minus(b.val) : r2(D(x.valueAed).times(want).div(x.packages));
       if (net.lte(0)) throw new AppError(422, `${x.boeNo}: nothing left to invoice`);
       const where = [x.portOfLoading, x.portOfDischarge].filter(Boolean).join(" → ");

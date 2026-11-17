@@ -174,3 +174,87 @@ describe("invoicing export bills, in whole or in part", () => {
     expect(["partial", "overdue"]).toContain((await billing.getInvoice(i.inv.id))!.state);
   });
 });
+
+import * as trace from "@/services/trace";
+import { auditLogs } from "@/db/schema";
+
+describe("stock rules: only linked goods are invoiced", () => {
+  it("an export bill that is not linked to any entry cannot be invoiced", async () => {
+    await mkExit("X9", { packages: 10, valueAed: "1000", truckContainerNo: "TSTU1234567" });
+    await expect(bill(custA, [["X9", 5]])).rejects.toThrow(/not linked to any entry bill/);
+    expect((await xb.invoiceableExits(custA)).find((r) => r.e.id === exit.X9)).toMatchObject({ allocated: 0, invoiceablePkgs: 0, remainingPkgs: 10 });
+  });
+
+  it("a partly linked export can only be invoiced for the linked packages; the final part takes the exact remainder", async () => {
+    await mkExit("X10", { packages: 20, valueAed: "2000" });
+    await alloc("X10", "E3", 8);
+    await expect(bill(custA, [["X10", 9]])).rejects.toThrow(/only 8 packages are linked/);
+    const first = await bill(custA, [["X10", 8]]);
+    expect(first.total).toBe("800.00");
+    await expect(alloc("X10", "E2", 12)).rejects.toMatchObject({ status: 409 }); // invoiced: links are locked, so link everything before the first invoice if you want more
+  });
+
+  it("linking everything first lets the whole bill be invoiced in parts that sum exactly", async () => {
+    await mkExit("X11", { packages: 20, valueAed: "2000.01" });
+    await alloc("X11", "E2", 20);
+    const a = await bill(custA, [["X11", 7]]);
+    const b = await bill(custA, [["X11", 13]]);
+    expect(Number(a.total) + Number(b.total)).toBeCloseTo(2000.01, 2);
+    expect(b.total).toBe((2000.01 - Number(a.total)).toFixed(2));
+  });
+
+  it("flags exports not backed by stock", async () => {
+    const un = (await fz.listExits({ q: tag, backing: "unbacked" })).rows.map((r) => r.e.boeNo);
+    expect(un).toContain(`${tag}-X9`); expect(un).toContain(`${tag}-X4`);
+    expect(un).not.toContain(`${tag}-X1`); expect(un).not.toContain(`${tag}-X7`);
+    expect(un).not.toContain(`${tag}-X3`); // import bills are not exports
+  });
+
+  it("warns when the linked weight is well above the imported weight", async () => {
+    await mkExit("X12", { packages: 2, valueAed: "100" });
+    const r = await fz.allocate({ exitBillId: exit.X12, entryBillId: entry.E3, packages: 1, weightKg: "999999", reason: null }, user, meta);
+    expect(r.warnings[0]).toMatch(/Weight check/);
+  });
+
+  it("changing an entry's package count after goods left it needs a reason, and is flagged in the audit log", async () => {
+    const e = (await fz.getEntry(entry.E4))!;
+    const { id: _i, version, createdAt: _c, updatedAt: _u, createdBy: _b, ...data } = e; void _i; void _c; void _u; void _b;
+    await expect(fz.saveEntry(e.id, { ...data, packages: 40 } as never, version, user, meta)).rejects.toMatchObject({ status: 422 });
+    const ok = await fz.saveEntry(e.id, { ...data, packages: 40 } as never, version, user, meta, "Customs recount after unloading");
+    expect(ok.packages).toBe(40);
+    const logs = await db.select().from(auditLogs).where(eq(auditLogs.entityId, e.id));
+    expect(logs.some((l) => l.action === "change_packages")).toBe(true);
+    // an entry nobody has exported from needs no reason
+    await mkEntry("E5", 10, -9);
+    const e5 = (await fz.getEntry(entry.E5))!;
+    const { id: _i2, version: v5, createdAt: _c2, updatedAt: _u2, createdBy: _b2, ...d5 } = e5; void _i2; void _c2; void _u2; void _b2;
+    expect((await fz.saveEntry(e5.id, { ...d5, packages: 12 } as never, v5, user, meta)).packages).toBe(12);
+  });
+});
+
+describe("shipment trace", () => {
+  it("shows an import, who received how many packages through which exits, and the invoices", async () => {
+    await db.update(entryBills).set({ marksNumbers: "TSTU1234567, TSTU7654321" }).where(eq(entryBills.id, entry.E1));
+    const { traces, unlinkedExits } = await trace.traceEntries({ q: "TSTU7654321" });
+    const t = traces.find((x) => x.entry.id === entry.E1)!;
+    expect(t.entry.packages).toBe(100);
+    expect(t.exported).toBe(103); // X1 60 + X2 40 + X5 3 (tolerance)
+    expect(t.remaining).toBe(-3);
+    const byName = Object.fromEntries(t.customers.map((c) => [c.name, c.packages]));
+    expect(byName[`${tag} A`]).toBe(63); expect(byName[`${tag} B`]).toBe(40);
+    const x1 = t.exits.find((e) => e.exit.id === exit.X1)!;
+    expect(x1.billed.pk).toBe(60); expect(x1.billed.invoices.length).toBeGreaterThan(0);
+    expect(trace.containersOf(t.entry.marksNumbers)).toEqual(["TSTU1234567", "TSTU7654321"]);
+    // X9 names TSTU1234567 but is not linked to any entry: it must show up as an unlinked exit
+    const found = await trace.traceEntries({ q: "TSTU1234567" });
+    expect(found.unlinkedExits.map((x) => x.id)).toContain(exit.X9);
+    expect(unlinkedExits).toBeDefined();
+  });
+
+  it("traces a customer's exits back to their source entries", async () => {
+    const rows = await trace.traceCustomer(custA);
+    const x7 = rows.find((r) => r.exit.id === exit.X7)!;
+    expect(x7.sources.map((s) => s.a.packages).sort((a, b) => a - b)).toEqual([10, 20]);
+    expect(rows.find((r) => r.exit.id === exit.X9)!.sources).toHaveLength(0);
+  });
+});

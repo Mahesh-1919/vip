@@ -39,10 +39,11 @@ export async function allocateAction(_: ActionState, form: FormData): Promise<Ac
   const user = await requirePermission("freezone:exit:write");
   const p = allocationSchema.safeParse(Object.fromEntries(form));
   if (!p.success) return { error: `${p.error.issues[0].path[0] ? String(p.error.issues[0].path[0]) + ": " : ""}${p.error.issues[0].message}` };
-  try { await fz.allocate(p.data, user, await clientMeta()); }
+  let warnings: string[] = [];
+  try { warnings = (await fz.allocate(p.data, user, await clientMeta())).warnings; }
   catch (e) { if (e instanceof AppError) return { error: e.message }; throw e; }
   revalidatePath("/freezone", "layout");
-  return { ok: "Allocated" };
+  return { ok: warnings.length ? `Linked. ${warnings.join(" ")}` : "Linked" };
 }
 
 export async function removeAllocationAction(form: FormData) {

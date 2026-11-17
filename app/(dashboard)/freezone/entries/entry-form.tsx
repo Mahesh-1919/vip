@@ -23,6 +23,7 @@ export function EntryForm({ entry }: { entry?: typeof entryBills.$inferSelect })
       <TextField name="packages" label="No. of packages" inputMode="numeric" defaultValue={entry?.packages ?? 0} />
       <TextField name="originCountry" label="Stock / origin country" defaultValue={entry?.originCountry ?? ""} placeholder="CN" hint="Country code, e.g. CN, TR, BH." />
       <TextField className="sm:col-span-2" name="marksNumbers" label="Marks & numbers (containers)" defaultValue={entry?.marksNumbers ?? ""} placeholder="HLXU8574630, MSKU1475670" />
+      {entry && <TextField className="sm:col-span-3" name="packagesReason" label="Reason for changing the package count" hint="Required only if you change the packages after goods have already been exported from this entry. Recorded in the audit log." maxLength={200} />}
       <TextareaField className="sm:col-span-3" name="notes" label="Notes" rows={2} defaultValue={entry?.notes ?? ""} />
     </ActionForm>
   );

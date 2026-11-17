@@ -32,7 +32,7 @@ export default async function AuditPage({ searchParams }: PageProps<"/admin/audi
   const columns: Column<(typeof rows)[number]>[] = [
     { key: "at", header: "When (Dubai)", className: "whitespace-nowrap", cell: (r) => r.at.toLocaleString("en-GB", { timeZone: "Asia/Dubai" }) },
     { key: "user", header: "User", cell: (r) => r.userEmail ?? "—" },
-    { key: "action", header: "Action", cell: (r) => <Badge variant="secondary">{r.action}</Badge> },
+    { key: "action", header: "Action", cell: (r) => <Badge variant={/change_packages|delete|reverse|account_locked|login_failed|mfa_failed/.test(r.action) ? "warning" : "secondary"}>{r.action}</Badge> },
     { key: "entity", header: "Entity", cell: (r) => <>{r.entity}{r.entityId ? <span className="text-muted-foreground"> · {r.entityId.slice(0, 8)}</span> : ""}</> },
     { key: "ip", header: "IP", cell: (r) => r.ip ?? "—" },
   ];

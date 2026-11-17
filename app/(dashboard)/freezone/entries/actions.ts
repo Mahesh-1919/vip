@@ -14,8 +14,8 @@ export async function saveEntryAction(id: string | null, _: ActionState, form: F
   const user = await requirePermission("freezone:entry:write");
   const p = entrySchema.safeParse(Object.fromEntries(form));
   if (!p.success) return { error: `${p.error.issues[0].path[0] ? String(p.error.issues[0].path[0]) + ": " : ""}${p.error.issues[0].message}` };
-  const { version, ...data } = p.data;
-  try { await fz.saveEntry(id, data as never, version, user, await clientMeta()); }
+  const { version, packagesReason, ...data } = p.data;
+  try { await fz.saveEntry(id, data as never, version, user, await clientMeta(), packagesReason); }
   catch (e) { if (e instanceof AppError) return { error: e.message }; throw e; }
   revalidatePath("/freezone", "layout");
   if (!id) redirect("/freezone/entries");

@@ -42,7 +42,7 @@ export default async function NewExitInvoicePage({ searchParams }: PageProps<"/s
 
       {customerId && customer && (
         <Card>
-          <CardHeader><CardTitle>{customer.name}</CardTitle><CardDescription>{exits.length ? "Enter the packages to invoice now. Leave a row blank to skip it. One invoice can cover several export bills." : "Every export bill of this customer is fully invoiced."}</CardDescription></CardHeader>
+          <CardHeader><CardTitle>{customer.name}</CardTitle><CardDescription>{exits.length ? "Only packages traced to stock (linked to an entry bill) can be invoiced. Enter the packages to invoice now and leave a row blank to skip it. One invoice can cover several export bills." : "Every export bill of this customer is fully invoiced."}</CardDescription></CardHeader>
           {exits.length > 0 && (
             <CardContent>
               <ActionForm action={createExitInvoiceAction} submit="Create tax invoice" resetOnSuccess={false} className="flex flex-col gap-5" confirm="This issues a tax invoice with the next number. It cannot be edited or deleted afterwards.">
@@ -51,7 +51,7 @@ export default async function NewExitInvoicePage({ searchParams }: PageProps<"/s
                   <Table>
                     <TableHeader className="bg-muted/50"><TableRow>
                       <TableHead className="px-3">Export bill (BOE)</TableHead><TableHead className="px-3">Date</TableHead><TableHead className="px-3">Destination</TableHead>
-                      <TableHead className="px-3 text-right">Value (AED)</TableHead><TableHead className="px-3 text-right">Packages</TableHead><TableHead className="px-3 text-right">Already invoiced</TableHead><TableHead className="px-3 text-right">Invoice now</TableHead>
+                      <TableHead className="px-3 text-right">Value (AED)</TableHead><TableHead className="px-3 text-right">Packages</TableHead><TableHead className="px-3 text-right">Linked to stock</TableHead><TableHead className="px-3 text-right">Already invoiced</TableHead><TableHead className="px-3 text-right">Invoice now</TableHead>
                     </TableRow></TableHeader>
                     <TableBody>
                       {exits.map((x) => (
@@ -61,8 +61,9 @@ export default async function NewExitInvoicePage({ searchParams }: PageProps<"/s
                           <TableCell className="px-3">{x.e.portOfDischarge}</TableCell>
                           <TableCell className="px-3 text-right">{n(x.e.valueAed)}</TableCell>
                           <TableCell className="px-3 text-right">{n(x.e.packages)}</TableCell>
+                          <TableCell className="px-3 text-right">{x.allocated >= x.e.packages ? <Badge variant="success">{n(x.allocated)}</Badge> : x.allocated > 0 ? <Badge variant="warning">{n(x.allocated)} of {n(x.e.packages)}</Badge> : <Badge variant="danger">Not linked</Badge>}</TableCell>
                           <TableCell className="px-3 text-right">{Number(x.billedPkgs) ? <Badge variant="info">{n(x.billedPkgs)} · {formatAED(x.billedValue)}</Badge> : <span className="text-muted-foreground">—</span>}</TableCell>
-                          <TableCell className="px-3 text-right"><Input name={`pk:${x.e.id}`} inputMode="numeric" defaultValue={focus ? (x.e.id === focus ? x.remainingPkgs : "") : x.remainingPkgs} className="ml-auto w-24 text-right" aria-label={`Packages to invoice for ${x.e.boeNo}`} /><div className="mt-0.5 text-[11px] text-muted-foreground">{n(x.remainingPkgs)} left</div></TableCell>
+                          <TableCell className="px-3 text-right"><Input name={`pk:${x.e.id}`} inputMode="numeric" disabled={x.invoiceablePkgs === 0} defaultValue={x.invoiceablePkgs === 0 ? "" : focus ? (x.e.id === focus ? x.invoiceablePkgs : "") : x.invoiceablePkgs} className="ml-auto w-24 text-right" aria-label={`Packages to invoice for ${x.e.boeNo}`} /><div className="mt-0.5 text-[11px] text-muted-foreground">{x.invoiceablePkgs === 0 ? <Link href={`/freezone/exits/${x.e.id}`} className="text-warning hover:underline">link to stock first</Link> : `${n(x.invoiceablePkgs)} can be invoiced`}</div></TableCell>
                         </TableRow>
                       ))}
                     </TableBody>

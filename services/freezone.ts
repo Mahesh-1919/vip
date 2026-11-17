@@ -45,7 +45,7 @@ export const getEntry = async (id: string) => (await db.select().from(entryBills
 
 type EntryData = Omit<typeof entryBills.$inferInsert, "id" | "version" | "createdAt" | "updatedAt" | "createdBy">;
 
-export async function saveEntry(id: string | null, data: EntryData, version: number | undefined, user: CurrentUser, meta: Meta) {
+export async function saveEntry(id: string | null, data: EntryData, version: number | undefined, user: CurrentUser, meta: Meta, packagesReason: string | null = null) {
   try {
     return await db.transaction(async (tx) => {
       if (!id) {
@@ -58,9 +58,13 @@ export async function saveEntry(id: string | null, data: EntryData, version: num
       if (!before) throw new AppError(404, "Entry not found");
       const [alloc] = await tx.select({ n: sql<number>`coalesce(sum(${billAllocations.packages}), 0)::int` }).from(billAllocations).where(eq(billAllocations.entryBillId, id));
       if (Number(data.packages) < alloc.n) throw new AppError(409, `${alloc.n} packages from this entry are already allocated to exit bills: the package count cannot go below that`);
+      // Stock-inflation guard: once goods have left this entry, changing its package count needs a reason (and is flagged in the audit log).
+      const changedWithExports = alloc.n > 0 && Number(data.packages) !== before.packages;
+      if (changedWithExports && (!packagesReason || packagesReason.trim().length < 5))
+        throw new AppError(422, `${alloc.n} packages from this entry have been exported. To change its package count (${before.packages} → ${data.packages}) give a reason of at least 5 characters.`);
       const [after] = await tx.update(entryBills).set({ ...data, version: sql`${entryBills.version} + 1` }).where(and(eq(entryBills.id, id), eq(entryBills.version, version))).returning();
       if (!after) throw new AppError(409, "This entry was changed by someone else. Reload and try again.");
-      await audit({ action: "update", entity: "entry_bill", entityId: id, before, after, ...who(user, meta) }, tx);
+      await audit({ action: changedWithExports ? "change_packages" : "update", entity: "entry_bill", entityId: id, before, after: changedWithExports ? { ...after, packagesReason: packagesReason!.trim(), packagesFrom: before.packages, packagesTo: after.packages } : after, ...who(user, meta) }, tx);
       return after;
     });
   } catch (e) { if (dup(e)) throw new AppError(409, "An entry with that bill number already exists"); throw e; }
@@ -77,7 +81,7 @@ export async function deleteEntry(id: string, user: CurrentUser, meta: Meta) {
 }
 
 // ---------- exit bills ----------
-export type ExitFilter = { q?: string; type?: string; cert?: string; refund?: string; from?: string; to?: string; alloc?: string; billing?: string; customerId?: string; page?: number; size?: number };
+export type ExitFilter = { q?: string; type?: string; cert?: string; refund?: string; from?: string; to?: string; alloc?: string; billing?: string; backing?: string; customerId?: string; page?: number; size?: number };
 
 const allocatedSql = sql<number>`(select coalesce(sum(a.packages), 0) from bill_allocations a where a.exit_bill_id = "exit_bills"."id")::int`;
 const billedPkgsSql = sql<string>`(select coalesce(sum(l.qty), 0) from invoice_lines l where l.exit_bill_id = "exit_bills"."id")`;
@@ -96,6 +100,7 @@ function exitWhere(f: ExitFilter) {
   if (f.alloc === "none") w.push(sql`${alloc} = 0`);
   if (f.alloc === "partial") w.push(sql`${alloc} > 0 and ${alloc} < exit_bills.packages`);
   if (f.alloc === "full") w.push(sql`${alloc} >= exit_bills.packages and exit_bills.packages > 0`);
+  if (f.backing === "unbacked") w.push(sql`exit_bills.bill_type = 'EXPORT' and exit_bills.packages > 0 and ${alloc} < exit_bills.packages`);
   const billed = sql`(select coalesce(sum(l.qty), 0) from invoice_lines l where l.exit_bill_id = exit_bills.id)`;
   if (f.billing === "none") w.push(sql`${billed} = 0`);
   if (f.billing === "partial") w.push(sql`${billed} > 0 and ${billed} < exit_bills.packages`);
@@ -186,9 +191,12 @@ export async function entriesForExit(exitId: string) {
   return rows.map((r) => ({ id: r.e.id, billNo: r.e.billNo, billDate: r.e.billDate, agent: r.e.agentName, packages: r.e.packages, remaining: r.e.packages - r.exported, marks: r.e.marksNumbers })).filter((r) => r.remaining > -Math.ceil(r.packages * OVER_EXPORT_TOLERANCE));
 }
 
-export async function allocate(i: { exitBillId: string; entryBillId: string; packages: number; weightKg: string; reason: string | null }, user: CurrentUser, meta: Meta) {
+export const WEIGHT_WARNING = 0.05;
+
+export async function allocate(i: { exitBillId: string; entryBillId: string; packages: number; weightKg: string; reason: string | null }, user: CurrentUser, meta: Meta): Promise<{ warnings: string[] }> {
   if (!Number.isInteger(i.packages) || i.packages <= 0) throw new AppError(422, "Packages must be a whole number above zero");
-  await db.transaction(async (tx) => {
+  return db.transaction(async (tx) => {
+    const warnings: string[] = [];
     // Lock both rows in a fixed order so two people cannot over-allocate the same entry.
     const [en] = await tx.select().from(entryBills).where(eq(entryBills.id, i.entryBillId)).for("update");
     const [ex] = await tx.select().from(exitBills).where(eq(exitBills.id, i.exitBillId)).for("update");
@@ -209,7 +217,10 @@ export async function allocate(i: { exitBillId: string; entryBillId: string; pac
     }
     const [row] = await tx.insert(billAllocations).values({ exitBillId: ex.id, entryBillId: en.id, packages: i.packages, weightKg: i.weightKg, overReason: reason, createdBy: user.id })
       .onConflictDoUpdate({ target: [billAllocations.exitBillId, billAllocations.entryBillId], set: { packages: sql`${billAllocations.packages} + ${i.packages}`, weightKg: sql`${billAllocations.weightKg} + ${i.weightKg}`, overReason: reason ?? sql`${billAllocations.overReason}` } }).returning();
-    await audit({ action: "allocate", entity: "exit_bill", entityId: ex.id, after: { entry: en.billNo, exit: ex.boeNo, packages: i.packages, total: row.packages, overReason: reason }, ...who(user, meta) }, tx);
+    const [w] = await tx.select({ kg: sql<string>`coalesce(sum(${billAllocations.weightKg}), 0)` }).from(billAllocations).where(eq(billAllocations.entryBillId, en.id));
+    if (Number(en.weightKg) > 0 && Number(w.kg) > Number(en.weightKg) * (1 + WEIGHT_WARNING)) warnings.push(`Weight check: ${Number(w.kg).toLocaleString("en-US")} kg is now linked from ${en.billNo}, more than the ${Number(en.weightKg).toLocaleString("en-US")} kg imported (over ${WEIGHT_WARNING * 100}%).`);
+    await audit({ action: "allocate", entity: "exit_bill", entityId: ex.id, after: { entry: en.billNo, exit: ex.boeNo, packages: i.packages, total: row.packages, overReason: reason, warnings }, ...who(user, meta) }, tx);
+    return { warnings };
   });
 }
 

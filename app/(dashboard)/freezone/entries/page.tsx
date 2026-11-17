@@ -4,6 +4,7 @@ import { Download, Plus } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { formatSheetDate } from "@/lib/dates";
 import { entryAgents, listEntries, PAGE_SIZES } from "@/services/freezone";
+import { containersOf } from "@/services/trace";
 import { DataTable, type Column } from "@/components/data-table";
 import { FilterBar } from "@/components/filter-bar";
 import { PageHeader } from "@/components/page-header";
@@ -44,7 +45,7 @@ export default async function EntriesPage({ searchParams }: PageProps<"/freezone
     { key: "wt", header: "Weight (Kg)", align: "right", cell: ({ e }) => num(e.weightKg, 0) },
     { key: "pk", header: "No of Packages", align: "right", cell: ({ e }) => num(e.packages, 0) },
     { key: "stock", header: "Stock", cell: ({ e }) => e.originCountry },
-    { key: "marks", header: "Marks & Numbers", className: "max-w-64 whitespace-normal font-mono text-xs", cell: ({ e }) => e.marksNumbers },
+    { key: "marks", header: "Marks & Numbers", className: "max-w-64 whitespace-normal font-mono text-xs", cell: ({ e }) => <span className="flex flex-wrap gap-x-2">{containersOf(e.marksNumbers).map((c) => <Link key={c} href={`/freezone/trace?q=${encodeURIComponent(c)}`} className="text-primary hover:underline">{c}</Link>)}</span> },
     { key: "line", header: "Line", cell: ({ e }) => e.line },
     { key: "exp", header: "Exported", align: "right", cell: ({ exported }) => exported ? `${n(exported)}` : <span className="text-muted-foreground">0</span> },
     { key: "rem", header: "Remaining", align: "right", cell: ({ e, exported }) => { const r = e.packages - exported; return <Badge variant={r < 0 ? "danger" : r === 0 ? "secondary" : exported > 0 ? "warning" : "success"}>{n(r)}</Badge>; } },

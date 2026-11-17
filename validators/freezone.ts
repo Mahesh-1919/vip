@@ -14,6 +14,7 @@ export const entrySchema = z.object({
   portOfLoading: text(80), portOfDischarge: text(80), invoiceNo: text(80),
   valueAed: amount, weightKg: amount, packages: int,
   originCountry: country, marksNumbers: text(500), line: text(60), notes: text(500),
+  packagesReason: text(200),
   version: z.coerce.number().int().positive().optional(),
 });
 

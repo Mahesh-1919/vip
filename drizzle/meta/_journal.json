@@ -15,6 +15,20 @@
       "when": 1794933696664,
       "tag": "0001_guards",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794934706618,
+      "tag": "0002_sales_invoices",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1794934707369,
+      "tag": "0003_sales_guards",
+      "breakpoints": true
     }
   ]
 }

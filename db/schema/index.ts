@@ -4,3 +4,4 @@ export * from "./attendance";
 export * from "./payroll";
 export * from "./company";
 export * from "./freezone";
+export * from "./sales";

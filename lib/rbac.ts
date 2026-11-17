@@ -18,6 +18,11 @@ export const PERMISSIONS = [
   "hr:payroll:read", "hr:payroll:write", "hr:payroll:finalize", "hr:payroll:export",
   "hr:payslip:read",
   "hr:config:read", "hr:config:write", // shifts, holiday calendars, leave policies, salary components
+  // Sales & invoicing
+  "sales:customer:read", "sales:customer:write",
+  "sales:sale:read", "sales:sale:write",
+  "sales:invoice:read", "sales:invoice:write",
+  "sales:payment:write",
   // Free zone register
   "freezone:entry:read", "freezone:entry:write",
   "freezone:exit:read", "freezone:exit:write",
@@ -36,5 +41,6 @@ export const DEFAULT_ROLES: {
 }[] = [
   { key: "admin", name: "Admin", description: "Full access to all modules, users and settings", permissions: all },
   { key: "hr_manager", name: "HR Manager", description: "HRMS module only", permissions: ["dashboard:view", ...by("hr:")] },
+  { key: "sales_manager", name: "Sales Manager", description: "Customers, sales, invoices and payments", permissions: ["dashboard:view", ...by("sales:")] },
   { key: "operations_manager", name: "Operations Manager", description: "Free zone entry and exit bills", permissions: ["dashboard:view", ...by("freezone:")] },
 ];

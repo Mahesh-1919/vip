@@ -8,5 +8,10 @@ export const companySettings = pgTable("company_settings", {
   address: text().notNull().default("Sharjah, United Arab Emirates"),
   phone: text(),
   email: text(),
+  /** UAE Tax Registration Number (15 digits): required to issue tax invoices. */
+  trn: text(),
+  bankName: text(),
+  iban: text(),
+  invoiceTerms: text(),
   updatedAt: updatedAt(),
 });

@@ -15,7 +15,11 @@ const opt = (max: number) => z.string().trim().max(max).transform((v) => v || nu
 const schema = z.object({
   name: z.string().trim().min(2, "Company name is required").max(150),
   address: z.string().trim().min(2, "Address is required").max(300),
+  trn: z.string().trim().transform((v) => v.replace(/\s/g, "")).pipe(z.union([z.literal(""), z.string().regex(/^\d{15}$/, "TRN must be 15 digits")])).transform((v) => v || null),
   phone: opt(40),
+  bankName: opt(100),
+  iban: z.string().trim().toUpperCase().transform((v) => v.replace(/\s/g, "")).pipe(z.union([z.literal(""), z.string().regex(/^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/, "Enter a valid IBAN")])).transform((v) => v || null),
+  invoiceTerms: opt(500),
   email: z.string().trim().toLowerCase().max(254).transform((v) => v || null).pipe(z.email().nullable()),
 });
 

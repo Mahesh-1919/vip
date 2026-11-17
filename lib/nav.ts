@@ -28,6 +28,14 @@ export const NAV: NavSection[] = [
     ],
   },
   {
+    title: "Sales",
+    items: [
+      { label: "Sales", href: "/sales", permission: "sales:sale:read", icon: "ShoppingCart" },
+      { label: "Invoices", href: "/sales/invoices", permission: "sales:invoice:read", icon: "ReceiptText" },
+      { label: "Customers", href: "/sales/customers", permission: "sales:customer:read", icon: "Contact" },
+    ],
+  },
+  {
     title: "Administration",
     items: [
       { label: "Users", href: "/admin/users", permission: "admin:user:read", icon: "UserCog" },

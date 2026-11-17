@@ -3,12 +3,14 @@ import { eq, sql as dsql } from "drizzle-orm";
 import { db, sql } from "./index";
 import { roles, rolePermissions, users, departments, salaryComponents, employees, employeeSalaries, employeeSalaryLines } from "./schema";
 import { shifts, shiftAssignments, holidayCalendars, holidays, leaveTypes, leaveBalances, leaveRequests, attendance } from "./schema";
-import { entryBills, exitBills } from "./schema";
+import { entryBills, exitBills, customers, companySettings, saleLines } from "./schema";
+import * as billing from "../services/billing";
 import { encryptField } from "../lib/crypto";
 import { DEFAULT_ROLES } from "../lib/rbac";
 import { hashPassword } from "../lib/password";
 
 const USERS = [
+  { email: "sales@erp.local", name: "Sara Sales", role: "sales_manager" },
   { email: "admin@erp.local", name: "Aisha Admin", role: "admin" },
   { email: "hr@erp.local", name: "Hana HR", role: "hr_manager" },
   { email: "operations@erp.local", name: "Omar Operations", role: "operations_manager" },
@@ -169,6 +171,44 @@ async function seedFreeZone() {
   await db.insert(exitBills).values(exits);
 }
 
+async function seedSales() {
+  await db.update(companySettings).set({
+    name: "Al Safa Global Trading LLC", address: "Office 1204, Business Bay, Dubai, UAE", trn: "100345678900003", phone: "+971 4 555 0142", email: "accounts@alsafa-trading.example",
+    bankName: "Emirates NBD", iban: "AE070331234567890123456", invoiceTerms: "Payment is due by the due date shown. Goods remain our property until paid in full.",
+  });
+  const [{ n }] = await db.select({ n: dsql<number>`count(*)::int` }).from(customers);
+  if (n > 0) return;
+  await db.insert(customers).values([
+    { name: "Delta Trading Co", contactName: "A. Rahman", phone: "+971 50 111 2233", email: "accounts@delta-trading.example", trn: "100456789000003", creditDays: 30, address: "Al Quoz, Dubai" },
+    { name: "Horizon General Trading", contactName: "M. Farouk", phone: "+971 55 222 3344", email: "finance@horizon-gt.example", trn: "100567890100003", creditDays: 45, address: "Sharjah Airport Free Zone" },
+    { name: "Nile Import Export", contactName: "S. Mansour", phone: "+971 52 333 4455", email: "ops@nile-ie.example", creditDays: 30, address: "Deira, Dubai" },
+    { name: "Savanna Traders", contactName: "J. Kimani", phone: "+971 54 444 5566", email: "billing@savanna.example", creditDays: 15, address: "Hamriyah Free Zone, Sharjah" },
+  ]);
+  const cus = await db.select().from(customers);
+  const [u] = await db.select().from(users).where(eq(users.email, "sales@erp.local"));
+  const actor = { id: u.id, email: u.email, role: { key: "sales_manager" }, permissions: new Set() } as never;
+  const meta = { ip: null, userAgent: null };
+  const c = (name: string) => cus.find((x) => x.name === name)!.id;
+  const mk = async (customer: string, ago: number, billRef: string | null, lines: [string, string, string, string][]) => {
+    const id = await billing.saveSale(null, { customerId: c(customer), saleDate: day(-ago), billRef, notes: null, lines: lines.map(([description, qty, unitPrice, vatRate]) => ({ description, qty, unitPrice, vatRate })) }, undefined, actor, meta);
+    return id;
+  };
+  const invoice = async (saleId: string, ago: number) => billing.createInvoice({ saleId, issueDate: day(-ago), dueDate: null, notes: null }, actor, meta);
+  const pay = (invoiceId: string, amount: string, ago: number) => billing.recordPayment({ invoiceId, paymentDate: day(-ago), amount, method: "bank_transfer", reference: "TT" + Math.floor(Math.random() * 90000 + 10000) }, actor, meta);
+
+  const s1 = await mk("Delta Trading Co", 70, "1-3-60-1-26-911", [["Clearing & handling charges", "1", "1850.00", "5"], ["Documentation fee", "1", "350.00", "5"]]);
+  const i1 = await invoice(s1, 69); await pay(i1.id, i1.total, 40);
+  const s2 = await mk("Horizon General Trading", 48, "1-3-60-1-26-934", [["Export clearing: 40ft container", "2", "1200.00", "0"], ["Transport to Jebel Ali", "2", "650.00", "5"]]);
+  const i2 = await invoice(s2, 47); await pay(i2.id, "1500.00", 20);
+  const s3 = await mk("Nile Import Export", 40, null, [["Storage charges (30 days)", "1", "2400.00", "5"]]);
+  await invoice(s3, 39);
+  const s4 = await mk("Savanna Traders", 12, "1-3-60-8-26-4390", [["Entry bill processing", "3", "420.00", "5"], ["Loading / unloading labour", "6", "180.00", "5"]]);
+  const i4 = await invoice(s4, 11); await pay(i4.id, "500.00", 3);
+  await mk("Delta Trading Co", 3, "1-3-60-1-26-958", [["Clearing & handling charges", "1", "1850.00", "5"]]);
+  await mk("Horizon General Trading", 1, null, [["Documentation fee", "2", "350.00", "5"], ["Courier", "1", "120.00", "5"]]);
+  void saleLines;
+}
+
 async function main() {
   if (process.env.NODE_ENV === "production") throw new Error("Refusing to seed demo data in production");
   const password = process.env.SEED_PASSWORD ?? "ChangeMe@123";
@@ -191,6 +231,7 @@ async function main() {
   await seedHr();
   await seedAttendance();
   await seedFreeZone();
+  await seedSales();
   console.log(`Seeded ${DEFAULT_ROLES.length} roles and ${USERS.length} users (password: ${password})`);
 }
 

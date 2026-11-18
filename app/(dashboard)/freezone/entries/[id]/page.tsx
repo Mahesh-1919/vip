@@ -10,7 +10,6 @@ import { DataTable, type Column } from "@/components/data-table";
 import { PageHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
 import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { deleteEntryAction } from "../actions";
 import { EntryForm } from "../entry-form";
@@ -38,7 +37,7 @@ export default async function EntryPage({ params }: PageProps<"/freezone/entries
   return (
     <div className="max-w-5xl flex flex-col gap-6">
       <PageHeader title={<span className="font-mono">{entry.billNo}</span>} back={{ href: "/freezone/entries", label: "Entry bills" }} description={entry.agentName}
-        actions={<><Link href={`/freezone/trace?entry=${entry.id}`} className={buttonVariants({ variant: "outline" })}>Trace this import</Link>{remaining <= 0 ? <Badge variant="secondary">Fully exported</Badge> : exported > 0 ? <Badge variant="warning">Partly exported</Badge> : <Badge variant="success">In stock</Badge>}</>} />
+        actions={<>{remaining <= 0 ? <Badge variant="secondary">Fully exported</Badge> : exported > 0 ? <Badge variant="warning">Partly exported</Badge> : <Badge variant="success">In stock</Badge>}</>} />
       <div className="grid gap-3 sm:grid-cols-3">
         <StatCard label="Packages imported" value={n(entry.packages)} />
         <StatCard label="Exported so far" value={n(exported)} hint={`${entry.packages ? Math.round((exported / entry.packages) * 100) : 0}% of this entry`} />

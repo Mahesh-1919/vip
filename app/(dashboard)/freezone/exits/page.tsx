@@ -45,7 +45,7 @@ export default async function ExitsPage({ searchParams }: PageProps<"/freezone/e
     { key: "wt", header: "Weight (Kg)", align: "right", cell: ({ e }) => num(e.weightKg, 0) },
     { key: "pk", header: "No of Pkgs", align: "right", cell: ({ e }) => num(e.packages, 0) },
     { key: "cty", header: "Country", cell: ({ e }) => e.country },
-    { key: "trk", header: "Truck / Container No", className: "max-w-56 whitespace-normal font-mono text-xs", cell: ({ e }) => <span className="flex flex-wrap gap-x-2">{containersOf(e.truckContainerNo).map((c) => <Link key={c} href={`/freezone/trace?q=${encodeURIComponent(c)}`} className="text-primary hover:underline">{c}</Link>)}</span> },
+    { key: "trk", header: "Truck / Container No", className: "max-w-56 whitespace-normal font-mono text-xs", cell: ({ e }) => <span className="flex flex-wrap gap-x-2">{containersOf(e.truckContainerNo).map((c) => <Link key={c} href={`/freezone/exits?q=${encodeURIComponent(c)}`} className="text-primary hover:underline">{c}</Link>)}</span> },
     { key: "cert", header: "T/Entry Cert", cell: ({ e }) => <Badge variant={tone(e.entryCertStatus)}>{e.entryCertStatus}</Badge> },
     { key: "cd", header: "Cheque Date", className: "whitespace-nowrap", cell: ({ e }) => formatSheetDate(e.chequeDate) },
     { key: "ca", header: "Cheque Amount", align: "right", cell: ({ e }) => (e.chequeAmount ? num(e.chequeAmount) : "") },

@@ -17,7 +17,7 @@ async function RedirectIfSignedIn() {
 }
 
 const FEATURES = [
-  { icon: Boxes, title: "Entry and exit bills, fully traced", text: "See which container came in, who received how many packages, and what was invoiced." },
+  { icon: Boxes, title: "Entry and exit bills, linked", text: "See which container came in, who received how many packages, and what was invoiced." },
   { icon: FileText, title: "UAE tax invoices", text: "Gap-free numbering, VAT, partial billing and payment tracking." },
   { icon: Users, title: "HR and payroll", text: "Staff register with document expiry alerts, leave, attendance and payslips." },
   { icon: ShieldCheck, title: "Built for control", text: "Role-based access, a full audit trail and locked records." },

@@ -25,7 +25,6 @@ export const NAV: NavSection[] = [
     items: [
       { label: "Entry bills", href: "/freezone/entries", permission: "freezone:entry:read", icon: "PackagePlus" },
       { label: "Exit bills", href: "/freezone/exits", permission: "freezone:exit:read", icon: "PackageMinus" },
-      { label: "Shipment trace", href: "/freezone/trace", permission: "freezone:exit:read", icon: "Route" },
     ],
   },
   {

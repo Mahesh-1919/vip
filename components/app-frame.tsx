@@ -20,7 +20,7 @@ import {
 const ICONS: Record<string, LucideIcon> = { LayoutDashboard, Users, CalendarCheck, Plane, Wallet, FileText, Clock, CalendarDays, Settings, Settings2, UserCog, ScrollText, Building2, PackagePlus, PackageMinus, Route, ShoppingCart, ReceiptText, Contact };
 type Section = { title: string; items: { label: string; href: string; icon: string }[] };
 
-const LABELS: Record<string, string> = { hr: "HR", freezone: "Free Zone", sales: "Sales", trace: "Shipment trace", admin: "Administration", config: "Settings", new: "New", sif: "SIF" };
+const LABELS: Record<string, string> = { hr: "HR", freezone: "Free Zone", sales: "Sales", admin: "Administration", config: "Settings", new: "New", sif: "SIF" };
 const isId = (s: string) => /^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(s);
 const pretty = (s: string) => LABELS[s] ?? s.replace(/-/g, " ").replace(/^./, (c) => c.toUpperCase());
 

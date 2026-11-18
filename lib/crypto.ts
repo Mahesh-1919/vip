@@ -1,8 +1,15 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes, timingSafeEqual } from "node:crypto";
 
+const g = globalThis as unknown as { __demoKey?: Buffer };
+
 function key(): Buffer {
   const raw = process.env.ENCRYPTION_KEY;
-  if (!raw) throw new Error("ENCRYPTION_KEY is not set");
+  if (!raw) {
+    // Demo mode keeps all data in memory, so a throwaway key that lives as long as the process is safe.
+    // With a real database the key must be set and kept: losing it makes encrypted fields unreadable.
+    if (process.env.DATA_MODE !== "db") return (g.__demoKey ??= randomBytes(32));
+    throw new Error("ENCRYPTION_KEY is not set (required when DATA_MODE=db)");
+  }
   const k = Buffer.from(raw, "base64");
   if (k.length !== 32) throw new Error("ENCRYPTION_KEY must be 32 bytes, base64-encoded");
   return k;

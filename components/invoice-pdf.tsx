@@ -1,11 +1,12 @@
-import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import { Document, Image, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import { logoPng } from "@/lib/logo";
 import type { InvoiceParties } from "@/db/schema";
 
 const s = StyleSheet.create({
   page: { padding: 36, fontSize: 9, fontFamily: "Helvetica", color: "#0f172a" },
   top: { flexDirection: "row", justifyContent: "space-between", marginBottom: 14 },
   company: { fontSize: 15, fontFamily: "Helvetica-Bold" },
-  title: { fontSize: 18, fontFamily: "Helvetica-Bold", color: "#0f766e", textAlign: "right" },
+  title: { fontSize: 18, fontFamily: "Helvetica-Bold", color: "#1a6b45", textAlign: "right" },
   muted: { color: "#64748b" },
   draft: { color: "#b91c1c", fontFamily: "Helvetica-Bold", textAlign: "right" },
   box: { flex: 1, padding: 8, border: "0.5pt solid #e2e8f0", borderRadius: 3 },
@@ -16,7 +17,7 @@ const s = StyleSheet.create({
   c1: { flex: 4 }, c2: { flex: 1, textAlign: "right" }, c3: { flex: 1.3, textAlign: "right" }, c4: { flex: 1.3, textAlign: "right" }, c5: { flex: 0.9, textAlign: "right" }, c6: { flex: 1.2, textAlign: "right" }, c7: { flex: 1.4, textAlign: "right" },
   totals: { marginTop: 10, alignSelf: "flex-end", width: 240 },
   tl: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 2 },
-  grand: { flexDirection: "row", justifyContent: "space-between", padding: 6, backgroundColor: "#0f766e", color: "#fff", fontFamily: "Helvetica-Bold", fontSize: 11, marginTop: 4 },
+  grand: { flexDirection: "row", justifyContent: "space-between", padding: 6, backgroundColor: "#1a6b45", color: "#fff", fontFamily: "Helvetica-Bold", fontSize: 11, marginTop: 4 },
   foot: { marginTop: 18, fontSize: 8, color: "#64748b" },
 });
 
@@ -36,12 +37,16 @@ export function InvoicePdf(d: InvoicePdfData) {
     <Document title={`Tax Invoice ${d.number}`} author={company.name}>
       <Page size="A4" style={s.page}>
         <View style={s.top}>
-          <View>
+          <View style={{ flexDirection: "row", gap: 10 }}>
+            {/* eslint-disable-next-line jsx-a11y/alt-text -- react-pdf Image, not an HTML img */}
+            <Image src={logoPng()} style={{ width: 58, height: 53 }} />
+            <View>
             <Text style={s.company}>{company.name}</Text>
             <Text style={s.muted}>{company.address}</Text>
             {company.phone ? <Text style={s.muted}>Tel: {company.phone}</Text> : null}
             {company.email ? <Text style={s.muted}>{company.email}</Text> : null}
             <Text>TRN: {company.trn ?? "—"}</Text>
+            </View>
           </View>
           <View>
             <Text style={s.title}>TAX INVOICE</Text>

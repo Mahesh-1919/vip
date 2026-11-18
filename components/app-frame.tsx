@@ -5,8 +5,9 @@ import { usePathname } from "next/navigation";
 import { Fragment, useState } from "react";
 import {
   LayoutDashboard, Users, CalendarCheck, Plane, Wallet, FileText, Clock, CalendarDays, Settings, Settings2,
-  UserCog, ScrollText, Boxes, Building2, PackagePlus, PackageMinus, Route, ShoppingCart, ReceiptText, Contact, ChevronDown, ShieldCheck, LogOut, type LucideIcon,
+  UserCog, ScrollText, Building2, PackagePlus, PackageMinus, Route, ShoppingCart, ReceiptText, Contact, ChevronDown, ShieldCheck, LogOut, type LucideIcon,
 } from "lucide-react";
+import { BrandLogo } from "@/components/brand-logo";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -53,7 +54,7 @@ export function AppFrame({ appName, companyName, sections, user, logout, childre
         <SidebarHeader>
           <SidebarMenu><SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link href="/"><span className="grid size-8 shrink-0 place-items-center rounded-full bg-sidebar-primary text-sidebar-primary-foreground"><Boxes className="size-[18px]" /></span><span className="grid min-w-0 leading-tight"><span className="truncate text-base font-semibold text-foreground">{appName}</span><span className="truncate text-[11px] font-normal text-sidebar-foreground/70">{companyName}</span></span></Link>
+              <Link href="/"><BrandLogo size={34} /><span className="grid min-w-0 leading-tight"><span className="truncate text-base font-semibold text-foreground">{appName}</span><span className="truncate text-[11px] font-normal text-sidebar-foreground/70">{companyName}</span></span></Link>
             </SidebarMenuButton>
           </SidebarMenuItem></SidebarMenu>
         </SidebarHeader>

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { Boxes, FileText, ShieldCheck, Users } from "lucide-react";
 import { getCurrentUser } from "@/lib/auth";
 import { APP_NAME } from "@/lib/brand";
+import { BrandLogo } from "@/components/brand-logo";
 import { loginAction } from "./actions";
 import { CredentialsForm } from "./login-form";
 
@@ -30,7 +31,7 @@ export default function LoginPage() {
         <div aria-hidden className="pointer-events-none absolute -right-24 -top-24 size-96 rounded-full bg-white/10 blur-3xl" />
         <div aria-hidden className="pointer-events-none absolute -bottom-32 -left-16 size-96 rounded-full bg-white/10 blur-3xl" />
         <div className="relative flex items-center gap-3 text-lg font-semibold text-white">
-          <span className="grid size-9 place-items-center rounded-full bg-white text-primary"><Boxes size={20} /></span>{APP_NAME}
+          <BrandLogo size={44} />{APP_NAME}
         </div>
         <div className="relative max-w-md">
           <h2 className="text-3xl font-semibold leading-tight tracking-tight text-white">Run your free-zone trading desk from one place.</h2>
@@ -48,7 +49,7 @@ export default function LoginPage() {
       <section className="flex flex-col items-center justify-center bg-background p-6 sm:p-12">
         <div className="w-full max-w-sm">
           <div className="mb-8 flex items-center gap-2.5 text-lg font-semibold lg:hidden">
-            <span className="grid size-8 place-items-center rounded-lg bg-primary text-primary-foreground"><Boxes size={18} /></span>{APP_NAME}
+            <BrandLogo size={36} />{APP_NAME}
           </div>
           <h1 className="text-2xl font-semibold tracking-tight">Welcome back</h1>
           <p className="mt-1 mb-6 text-sm text-muted-foreground">Sign in to your account to continue.</p>

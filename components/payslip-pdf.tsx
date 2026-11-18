@@ -1,9 +1,10 @@
-import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import { Document, Image, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import { logoPng } from "@/lib/logo";
 import type { PayLine } from "@/db/schema";
 
 const s = StyleSheet.create({
   page: { padding: 36, fontSize: 10, fontFamily: "Helvetica", color: "#0f172a" },
-  head: { borderBottom: "1pt solid #0f766e", paddingBottom: 8, marginBottom: 12 },
+  head: { borderBottom: "1pt solid #1a6b45", paddingBottom: 8, marginBottom: 12 },
   company: { fontSize: 16, fontFamily: "Helvetica-Bold" },
   muted: { color: "#64748b" },
   title: { fontSize: 12, fontFamily: "Helvetica-Bold", marginTop: 4 },
@@ -16,7 +17,7 @@ const s = StyleSheet.create({
   row: { padding: 5, flexDirection: "row", justifyContent: "space-between", borderBottom: "0.5pt solid #e2e8f0" },
   note: { fontSize: 8, color: "#64748b" },
   total: { padding: 5, flexDirection: "row", justifyContent: "space-between", fontFamily: "Helvetica-Bold" },
-  net: { marginTop: 14, padding: 10, backgroundColor: "#0f766e", color: "#fff", flexDirection: "row", justifyContent: "space-between", fontSize: 13, fontFamily: "Helvetica-Bold" },
+  net: { marginTop: 14, padding: 10, backgroundColor: "#1a6b45", color: "#fff", flexDirection: "row", justifyContent: "space-between", fontSize: 13, fontFamily: "Helvetica-Bold" },
   foot: { marginTop: 18, fontSize: 8, color: "#64748b" },
 });
 
@@ -50,10 +51,14 @@ export function PayslipPdf({ company, year, month, item }: PayslipData) {
   return (
     <Document title={`Payslip ${item.empCode} ${period}`} author={company.name}>
       <Page size="A4" style={s.page}>
-        <View style={s.head}>
-          <Text style={s.company}>{company.name}</Text>
-          <Text style={s.muted}>{company.address}</Text>
-          <Text style={s.title}>Payslip for {period}</Text>
+        <View style={[s.head, { flexDirection: "row", gap: 10, alignItems: "center" }]}>
+          {/* eslint-disable-next-line jsx-a11y/alt-text -- react-pdf Image, not an HTML img */}
+          <Image src={logoPng()} style={{ width: 52, height: 48 }} />
+          <View>
+            <Text style={s.company}>{company.name}</Text>
+            <Text style={s.muted}>{company.address}</Text>
+            <Text style={s.title}>Payslip for {period}</Text>
+          </View>
         </View>
         <View style={s.grid}>
           {[["Employee", item.employeeName], ["Employee ID", item.empCode], ["Designation", item.designation ?? "—"], ["Department", item.department ?? "—"],

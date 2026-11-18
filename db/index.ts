@@ -46,7 +46,15 @@ async function createDemoDb() {
     import("drizzle-orm/pglite"),
     import("./demo-migrations"),
   ]);
-  const d = pglite(new PGlite(), { schema, casing: "snake_case" });
+  const pg = new PGlite();
+  // Demo mode runs on many independent serverless instances that must agree on every id (links, sessions).
+  // Shadow gen_random_uuid() with a deterministic one BEFORE the tables are created (defaults bind to it).
+  await pg.exec(`
+    create sequence public.demo_uuid_seq;
+    create function public.gen_random_uuid() returns uuid language sql as $$ select md5('vip-demo-' || nextval('public.demo_uuid_seq')::text)::uuid $$;
+    set search_path = public, pg_catalog;
+  `);
+  const d = pglite(pg, { schema, casing: "snake_case" });
   // Same as drizzle's migrate(), but from the inlined list (no files to read at runtime).
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- internal drizzle members, as used by its own migrator
   const internal = d as any;

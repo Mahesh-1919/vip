@@ -7,7 +7,7 @@ import type { ActionState } from "@/lib/action-state";
 import { requirePermission } from "@/lib/auth";
 import { AppError } from "@/lib/errors";
 import { clientMeta } from "@/lib/request";
-import { allocationSchema, exitSchema } from "@/validators/freezone";
+import { allocationSchema, exitFromStockSchema, exitSchema } from "@/validators/freezone";
 import { db } from "@/db";
 import { customers } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -50,4 +50,19 @@ export async function removeAllocationAction(form: FormData) {
   const user = await requirePermission("freezone:exit:write");
   try { await fz.removeAllocation(z.uuid().parse(form.get("id")), user, await clientMeta()); } catch (e) { if (!(e instanceof AppError)) throw e; }
   revalidatePath("/freezone", "layout");
+}
+
+/** New export bill straight from an entry bill's stock. */
+export async function createExitFromStockAction(_: ActionState, form: FormData): Promise<ActionState> {
+  const user = await requirePermission("freezone:exit:write");
+  const p = exitFromStockSchema.safeParse(Object.fromEntries(form));
+  if (!p.success) return { error: `${p.error.issues[0].path[0] ? String(p.error.issues[0].path[0]) + ": " : ""}${p.error.issues[0].message}` };
+  const { entryBillId, ...data } = p.data;
+  const [c] = await db.select({ n: customers.name }).from(customers).where(eq(customers.id, data.customerId));
+  if (!c) return { error: "Choose the customer" };
+  let id: string;
+  try { id = (await fz.createExitFromStock({ ...data, importerName: c.n } as never, entryBillId, user, await clientMeta())).exit.id; }
+  catch (e) { if (e instanceof AppError) return { error: e.message }; throw e; }
+  revalidatePath("/freezone", "layout");
+  redirect(`/freezone/exits/${id}`);
 }

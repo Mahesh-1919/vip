@@ -1,6 +1,6 @@
 import "server-only";
 import { and, asc, count, desc, eq, gte, ilike, inArray, lte, or, sql, type SQL } from "drizzle-orm";
-import { db } from "@/db";
+import { db, type Tx } from "@/db";
 import { billAllocations, customers, entryBills, exitBills, invoiceLines, invoices, sales } from "@/db/schema";
 import { audit } from "@/lib/audit";
 import { AppError } from "@/lib/errors";
@@ -212,32 +212,55 @@ export async function entriesForExit(exitId: string) {
 
 export const WEIGHT_WARNING = 0.05;
 
-export async function allocate(i: { exitBillId: string; entryBillId: string; packages: number; weightKg: string }, user: CurrentUser, meta: Meta): Promise<{ warnings: string[] }> {
+type AllocInput = { exitBillId: string; entryBillId: string; packages: number; weightKg: string };
+
+/** Link packages of an exit bill to the entry bill they came from (runs inside the caller's transaction). */
+async function allocateTx(tx: Tx, i: AllocInput, user: CurrentUser, meta: Meta): Promise<{ warnings: string[] }> {
   if (!Number.isInteger(i.packages) || i.packages <= 0) throw new AppError(422, "Packages must be a whole number above zero");
-  return db.transaction(async (tx) => {
-    const warnings: string[] = [];
-    // Lock both rows in a fixed order so two people cannot over-allocate the same entry.
-    const [en] = await tx.select().from(entryBills).where(eq(entryBills.id, i.entryBillId)).for("update");
-    const [ex] = await tx.select().from(exitBills).where(eq(exitBills.id, i.exitBillId)).for("update");
-    if (!en || !ex) throw new AppError(404, "Entry or exit bill not found");
-    const [{ billed }] = await tx.select({ billed: sql<string>`coalesce(sum(${invoiceLines.qty}), 0)` }).from(invoiceLines).where(eq(invoiceLines.exitBillId, ex.id));
-    if (Number(billed) > 0) throw new AppError(409, "This exit bill is already invoiced: its allocations are locked");
-    if (en.billDate > ex.exitDate) throw new AppError(422, `The exit (${ex.exitDate}) is dated before the entry bill (${en.billDate})`);
-    const [exitTotal] = await tx.select({ n: sql<number>`coalesce(sum(${billAllocations.packages}), 0)::int` }).from(billAllocations).where(eq(billAllocations.exitBillId, ex.id));
-    if (exitTotal.n + i.packages > ex.packages) throw new AppError(422, `The exit has ${ex.packages} packages and ${exitTotal.n} are already allocated: ${ex.packages - exitTotal.n} left to allocate`);
-    const [entryTotal] = await tx.select({ n: sql<number>`coalesce(sum(${billAllocations.packages}), 0)::int` }).from(billAllocations).where(eq(billAllocations.entryBillId, en.id));
-    const after = entryTotal.n + i.packages;
-    if (after > en.packages) {
-      const left = en.packages - entryTotal.n;
-      throw new AppError(409, left > 0 ? `Not enough stock: ${en.billNo} has only ${left} packages left and this would take ${i.packages}.` : `Not enough stock: all ${en.packages} packages of ${en.billNo} have already been exported.`);
-    }
-    const [row] = await tx.insert(billAllocations).values({ exitBillId: ex.id, entryBillId: en.id, packages: i.packages, weightKg: i.weightKg, createdBy: user.id })
-      .onConflictDoUpdate({ target: [billAllocations.exitBillId, billAllocations.entryBillId], set: { packages: sql`${billAllocations.packages} + ${i.packages}`, weightKg: sql`${billAllocations.weightKg} + ${i.weightKg}` } }).returning();
-    const [w] = await tx.select({ kg: sql<string>`coalesce(sum(${billAllocations.weightKg}), 0)` }).from(billAllocations).where(eq(billAllocations.entryBillId, en.id));
-    if (Number(en.weightKg) > 0 && Number(w.kg) > Number(en.weightKg) * (1 + WEIGHT_WARNING)) warnings.push(`Weight check: ${Number(w.kg).toLocaleString("en-US")} kg is now linked from ${en.billNo}, more than the ${Number(en.weightKg).toLocaleString("en-US")} kg imported (over ${WEIGHT_WARNING * 100}%).`);
-    await audit({ action: "allocate", entity: "exit_bill", entityId: ex.id, after: { entry: en.billNo, exit: ex.boeNo, packages: i.packages, total: row.packages, warnings }, ...who(user, meta) }, tx);
-    return { warnings };
-  });
+  const warnings: string[] = [];
+  // Lock both rows in a fixed order so two people cannot over-allocate the same entry.
+  const [en] = await tx.select().from(entryBills).where(eq(entryBills.id, i.entryBillId)).for("update");
+  const [ex] = await tx.select().from(exitBills).where(eq(exitBills.id, i.exitBillId)).for("update");
+  if (!en || !ex) throw new AppError(404, "Entry or exit bill not found");
+  const [{ billed }] = await tx.select({ billed: sql<string>`coalesce(sum(${invoiceLines.qty}), 0)` }).from(invoiceLines).where(eq(invoiceLines.exitBillId, ex.id));
+  if (Number(billed) > 0) throw new AppError(409, "This exit bill is already invoiced: its allocations are locked");
+  if (en.billDate > ex.exitDate) throw new AppError(422, `The exit (${ex.exitDate}) is dated before the entry bill (${en.billDate})`);
+  const [exitTotal] = await tx.select({ n: sql<number>`coalesce(sum(${billAllocations.packages}), 0)::int` }).from(billAllocations).where(eq(billAllocations.exitBillId, ex.id));
+  if (exitTotal.n + i.packages > ex.packages) throw new AppError(422, `The exit has ${ex.packages} packages and ${exitTotal.n} are already allocated: ${ex.packages - exitTotal.n} left to allocate`);
+  const [entryTotal] = await tx.select({ n: sql<number>`coalesce(sum(${billAllocations.packages}), 0)::int` }).from(billAllocations).where(eq(billAllocations.entryBillId, en.id));
+  const after = entryTotal.n + i.packages;
+  if (after > en.packages) {
+    const left = en.packages - entryTotal.n;
+    throw new AppError(409, left > 0 ? `Not enough stock: ${en.billNo} has only ${left} packages left and this would take ${i.packages}.` : `Not enough stock: all ${en.packages} packages of ${en.billNo} have already been exported.`);
+  }
+  const [row] = await tx.insert(billAllocations).values({ exitBillId: ex.id, entryBillId: en.id, packages: i.packages, weightKg: i.weightKg, createdBy: user.id })
+    .onConflictDoUpdate({ target: [billAllocations.exitBillId, billAllocations.entryBillId], set: { packages: sql`${billAllocations.packages} + ${i.packages}`, weightKg: sql`${billAllocations.weightKg} + ${i.weightKg}` } }).returning();
+  const [w] = await tx.select({ kg: sql<string>`coalesce(sum(${billAllocations.weightKg}), 0)` }).from(billAllocations).where(eq(billAllocations.entryBillId, en.id));
+  if (Number(en.weightKg) > 0 && Number(w.kg) > Number(en.weightKg) * (1 + WEIGHT_WARNING)) warnings.push(`Weight check: ${Number(w.kg).toLocaleString("en-US")} kg is now linked from ${en.billNo}, more than the ${Number(en.weightKg).toLocaleString("en-US")} kg imported (over ${WEIGHT_WARNING * 100}%).`);
+  await audit({ action: "allocate", entity: "exit_bill", entityId: ex.id, after: { entry: en.billNo, exit: ex.boeNo, packages: i.packages, total: row.packages, warnings }, ...who(user, meta) }, tx);
+  return { warnings };
+}
+
+export async function allocate(i: AllocInput, user: CurrentUser, meta: Meta): Promise<{ warnings: string[] }> {
+  return db.transaction((tx) => allocateTx(tx, i, user, meta));
+}
+
+/** Entry bills that still have packages in stock, oldest first: the list a new exit bill draws from. */
+export async function entriesWithStock() {
+  const rows = await db.select({ e: entryBills, exported: exportedSql }).from(entryBills).orderBy(asc(entryBills.billDate), asc(entryBills.billNo));
+  return rows.map((r) => ({ id: r.e.id, billNo: r.e.billNo, billDate: r.e.billDate, agent: r.e.agentName, packages: r.e.packages, remaining: r.e.packages - r.exported, weightKg: r.e.weightKg, marks: r.e.marksNumbers, origin: r.e.originCountry })).filter((r) => r.remaining > 0);
+}
+
+/** Create an export bill and take its packages from one entry bill in a single step (all or nothing). */
+export async function createExitFromStock(data: Omit<ExitData, "billType" | "packages"> & { packages: number }, entryBillId: string, user: CurrentUser, meta: Meta) {
+  try {
+    return await db.transaction(async (tx) => {
+      const [r] = await tx.insert(exitBills).values({ ...data, billType: "EXPORT", createdBy: user.id } as never).returning();
+      await audit({ action: "create", entity: "exit_bill", entityId: r.id, after: r, ...who(user, meta) }, tx);
+      const res = await allocateTx(tx, { exitBillId: r.id, entryBillId, packages: data.packages, weightKg: String(data.weightKg ?? "0") }, user, meta);
+      return { exit: r, warnings: res.warnings };
+    });
+  } catch (e) { if (dup(e)) throw new AppError(409, "An exit bill with that BOE number already exists"); throw e; }
 }
 
 export async function removeAllocation(id: string, user: CurrentUser, meta: Meta) {

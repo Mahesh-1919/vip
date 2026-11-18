@@ -258,3 +258,30 @@ describe("shipment trace", () => {
     expect(rows.find((r) => r.exit.id === exit.X9)!.sources).toHaveLength(0);
   });
 });
+
+describe("creating an export bill straight from stock", () => {
+  const base = { exitDate: d(-1), valueAed: "500", weightKg: "50", importerName: "Test importer" } as never;
+
+  it("creates the exit bill and takes its packages from the chosen entry in one step", async () => {
+    await mkEntry("S1", 40, -10);
+    const before = (await fz.entriesWithStock()).find((e) => e.id === entry.S1)!;
+    expect(before.remaining).toBe(40);
+    const r = await fz.createExitFromStock({ ...(base as object), boeNo: `${tag}-S1X`, packages: 15, customerId: custA, refundStatus: "Pending", entryCertStatus: "Pending" } as never, entry.S1, user, meta);
+    exit.S1X = r.exit.id;
+    expect(r.exit.billType).toBe("EXPORT");
+    expect((await fz.entriesWithStock()).find((e) => e.id === entry.S1)!.remaining).toBe(25);
+    expect((await fz.getExitDetail(r.exit.id))!.unallocated).toBe(0);
+  });
+
+  it("refuses more than is in stock and leaves no exit bill behind", async () => {
+    await expect(fz.createExitFromStock({ ...(base as object), boeNo: `${tag}-S2X`, packages: 26, customerId: custA, refundStatus: "Pending", entryCertStatus: "Pending" } as never, entry.S1, user, meta)).rejects.toMatchObject({ status: 409 });
+    expect(await db.select().from(exitBills).where(eq(exitBills.boeNo, `${tag}-S2X`))).toHaveLength(0);
+    expect((await fz.entriesWithStock()).find((e) => e.id === entry.S1)!.remaining).toBe(25);
+  });
+
+  it("an entry with nothing left drops out of the list", async () => {
+    const r = await fz.createExitFromStock({ ...(base as object), boeNo: `${tag}-S3X`, packages: 25, customerId: custA, refundStatus: "Pending", entryCertStatus: "Pending" } as never, entry.S1, user, meta);
+    exit.S3X = r.exit.id;
+    expect((await fz.entriesWithStock()).some((e) => e.id === entry.S1)).toBe(false);
+  });
+});

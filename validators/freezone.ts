@@ -43,3 +43,10 @@ export const allocationSchema = z.object({
   packages: z.string().trim().regex(/^\d{1,9}$/, "Packages must be a whole number").transform(Number),
   weightKg: amount,
 });
+
+/** New export bill taken straight from stock: the entry bill supplies the packages. Bill type is always EXPORT. */
+export const exitFromStockSchema = exitSchema.omit({ billType: true, importerName: true, packages: true, customerId: true, version: true }).extend({
+  entryBillId: z.uuid("Choose the entry bill (import) the goods come from"),
+  customerId: z.uuid("Choose the customer"),
+  packages: z.string().trim().regex(/^\d{1,9}$/, "Packages must be a whole number").transform(Number).pipe(z.number().int().min(1, "Enter at least 1 package")),
+});

@@ -34,7 +34,7 @@ export default function LoginPage() {
           <BrandLogo size={44} />{APP_NAME}
         </div>
         <div className="relative max-w-md">
-          <h2 className="text-3xl font-semibold leading-tight tracking-tight text-white">Run your free-zone trading desk from one place.</h2>
+          <h2 className="text-3xl font-semibold leading-tight tracking-tight text-white">Run your trading business from one place.</h2>
           <ul className="mt-8 flex flex-col gap-5">
             {FEATURES.map(({ icon: Icon, title, text }) => (
               <li key={title} className="flex gap-3">

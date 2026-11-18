@@ -37,7 +37,7 @@ export function DataTable<T>({ columns, rows, rowKey, empty, sort, className, de
   const align = (a?: string) => (a === "right" ? "text-right" : a === "center" ? "text-center" : "");
   return (
     <Card className={cn("gap-0 overflow-hidden py-0", className)}>
-      <Table containerClassName={scroll ? "max-h-[min(72vh,46rem)] overflow-y-auto" : undefined}>
+      <Table containerClassName={scroll ? "max-h-[max(24rem,calc(100dvh-23rem))] overflow-y-auto" : undefined}>
         <TableHeader className={cn("bg-muted", scroll && "sticky top-0 z-10 shadow-[0_1px_0_var(--border)]")}>
           <TableRow>
             {columns.map((c) => (

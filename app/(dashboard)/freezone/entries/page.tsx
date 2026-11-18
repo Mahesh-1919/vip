@@ -3,11 +3,13 @@ import Link from "next/link";
 import { Download, Plus } from "lucide-react";
 import { requirePermission } from "@/lib/auth";
 import { formatSheetDate } from "@/lib/dates";
-import { entryAgents, listEntries, PAGE_SIZES } from "@/services/freezone";
+import { entryAgents, listEntries, PAGE_SIZES, stockSummary } from "@/services/freezone";
 import { containersOf } from "@/services/trace";
 import { DataTable, type Column } from "@/components/data-table";
 import { FilterBar, FilterField } from "@/components/filter-bar";
 import { PageHeader } from "@/components/page-header";
+import { StatCard } from "@/components/stat-card";
+import { Boxes, PackagePlus, PackageMinus, Layers } from "lucide-react";
 import { Pagination } from "@/components/pagination";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -27,9 +29,10 @@ export default async function EntriesPage({ searchParams }: PageProps<"/freezone
   const user = await requirePermission("freezone:entry:read");
   const sp = await searchParams;
   const params = { q: one(sp.q).slice(0, 80), agent: one(sp.agent), origin: one(sp.origin).slice(0, 10), open: one(sp.open), from: date(one(sp.from)), to: date(one(sp.to)), size: one(sp.size) };
-  const [res, agents] = await Promise.all([
+  const [res, agents, stock] = await Promise.all([
     listEntries({ ...params, from: params.from || undefined, to: params.to || undefined, size: Number(params.size) || 25, page: Number(one(sp.page)) || 1 }),
     entryAgents(),
+    stockSummary(),
   ]);
   const keep = { ...params, size: String(res.size) };
   const qs = new URLSearchParams(Object.entries(params).filter(([k, v]) => v && k !== "size") as [string, string][]).toString();
@@ -60,6 +63,12 @@ export default async function EntriesPage({ searchParams }: PageProps<"/freezone
           <a href={`/api/freezone/export?sheet=entries&${qs}`} className={buttonVariants({ variant: "outline" })}><Download size={16} />CSV</a>
           {user.permissions.has("freezone:entry:write") && <Link href="/freezone/entries/new" className={buttonVariants()}><Plus size={16} />Add entry</Link>}
         </>} />
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Packages imported" value={num(stock.imported, 0)} icon={<PackagePlus />} hint="All entry bills" />
+        <StatCard label="Packages exported" value={num(stock.exported, 0)} icon={<PackageMinus />} hint="Linked to exit bills" />
+        <StatCard featured label="In stock now" value={num(stock.inStock, 0)} icon={<Boxes />} hint="Imported minus exported" href="/freezone/entries?open=1" />
+        <StatCard label="Entries with stock left" value={num(stock.openEntries, 0)} icon={<Layers />} hint="Still have packages to export" href="/freezone/entries?open=1" />
+      </div>
       <FilterBar>
         <FilterField label="Search"><Input name="q" defaultValue={params.q} placeholder="Bill, agent, invoice, container…" className="w-72" /></FilterField>
         <FilterField label="Agent"><NativeSelect name="agent" defaultValue={params.agent} wrapperClassName="w-56"><NativeSelectOption value="">All agents</NativeSelectOption>{agents.map((a) => <NativeSelectOption key={a} value={a}>{a}</NativeSelectOption>)}</NativeSelect></FilterField>

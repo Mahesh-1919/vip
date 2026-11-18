@@ -1,7 +1,7 @@
 import "server-only";
-import { and, asc, count, desc, eq, gte, ilike, lte, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, ilike, inArray, lte, or, sql, type SQL } from "drizzle-orm";
 import { db } from "@/db";
-import { billAllocations, customers, entryBills, exitBills, invoiceLines, invoices } from "@/db/schema";
+import { billAllocations, customers, entryBills, exitBills, invoiceLines, invoices, sales } from "@/db/schema";
 import { audit } from "@/lib/audit";
 import { AppError } from "@/lib/errors";
 import type { CurrentUser } from "@/lib/auth";
@@ -160,16 +160,35 @@ export async function deleteExit(id: string, user: CurrentUser, meta: Meta) {
 
 
 // ---------- links between entry bills and exit bills ----------
-/** Taking more than the entry's package count is tolerated up to this share, but needs a written reason. */
-export const OVER_EXPORT_TOLERANCE = 0.1;
+// Hard stock rule: an entry bill can never supply more packages than it imported.
 
 export async function getEntryDetail(id: string) {
   const [e] = await db.select({ e: entryBills, exported: exportedSql }).from(entryBills).where(eq(entryBills.id, id));
   if (!e) return null;
-  const allocations = await db.select({ a: billAllocations, boeNo: exitBills.boeNo, exitDate: exitBills.exitDate, exitId: exitBills.id, importer: exitBills.importerName, customer: customers.name, billType: exitBills.billType })
+  const allocations = await db.select({ a: billAllocations, boeNo: exitBills.boeNo, exitDate: exitBills.exitDate, exitId: exitBills.id, exitPackages: exitBills.packages, importer: exitBills.importerName, customer: customers.name, customerId: customers.id, billType: exitBills.billType })
     .from(billAllocations).innerJoin(exitBills, eq(exitBills.id, billAllocations.exitBillId)).leftJoin(customers, eq(customers.id, exitBills.customerId))
     .where(eq(billAllocations.entryBillId, id)).orderBy(asc(exitBills.exitDate));
-  return { ...e, remaining: e.e.packages - e.exported, allocations };
+  // Which invoices (and sales) cover each of those exits.
+  const ids = allocations.map((x) => x.exitId);
+  const lines = ids.length ? await db.select({ exitId: invoiceLines.exitBillId, qty: invoiceLines.qty, invoiceId: invoices.id, number: invoices.number, saleId: sales.id, saleRef: sales.ref })
+    .from(invoiceLines).innerJoin(invoices, eq(invoices.id, invoiceLines.invoiceId)).innerJoin(sales, eq(sales.id, invoices.saleId)).where(inArray(invoiceLines.exitBillId, ids)) : [];
+  const rows = allocations.map((x) => {
+    const mine = lines.filter((l) => l.exitId === x.exitId);
+    return { ...x, invoicedPkgs: mine.reduce((t, l) => t + Number(l.qty), 0), invoices: [...new Map(mine.map((l) => [l.invoiceId, l])).values()] };
+  });
+  // One line per customer: how the entry was distributed.
+  const byCustomer = [...rows.reduce((m, r) => { const k = r.customerId ?? "none"; const c = m.get(k) ?? { name: r.customer ?? r.importer ?? "No customer", packages: 0, exits: 0 }; c.packages += r.a.packages; c.exits += 1; return m.set(k, c); }, new Map<string, { name: string; packages: number; exits: number }>()).values()].sort((a, b) => b.packages - a.packages);
+  return { ...e, remaining: e.e.packages - e.exported, allocations: rows, byCustomer };
+}
+
+/** Stock position across all entry bills, for the entry list header. */
+export async function stockSummary() {
+  const [r] = await db.select({
+    imported: sql<number>`coalesce(sum(${entryBills.packages}), 0)::int`,
+    exported: sql<number>`coalesce(sum(${exportedSql}), 0)::int`,
+    openEntries: sql<number>`count(*) filter (where ${entryBills.packages} > ${exportedSql})::int`,
+  }).from(entryBills);
+  return { ...r, inStock: r.imported - r.exported };
 }
 
 export async function getExitDetail(id: string) {
@@ -188,12 +207,12 @@ export async function entriesForExit(exitId: string) {
   const [x] = await db.select({ date: exitBills.exitDate }).from(exitBills).where(eq(exitBills.id, exitId));
   if (!x) return [];
   const rows = await db.select({ e: entryBills, exported: exportedSql }).from(entryBills).where(lte(entryBills.billDate, x.date)).orderBy(asc(entryBills.billDate), asc(entryBills.billNo));
-  return rows.map((r) => ({ id: r.e.id, billNo: r.e.billNo, billDate: r.e.billDate, agent: r.e.agentName, packages: r.e.packages, remaining: r.e.packages - r.exported, marks: r.e.marksNumbers })).filter((r) => r.remaining > -Math.ceil(r.packages * OVER_EXPORT_TOLERANCE));
+  return rows.map((r) => ({ id: r.e.id, billNo: r.e.billNo, billDate: r.e.billDate, agent: r.e.agentName, packages: r.e.packages, remaining: r.e.packages - r.exported, marks: r.e.marksNumbers })).filter((r) => r.remaining > 0);
 }
 
 export const WEIGHT_WARNING = 0.05;
 
-export async function allocate(i: { exitBillId: string; entryBillId: string; packages: number; weightKg: string; reason: string | null }, user: CurrentUser, meta: Meta): Promise<{ warnings: string[] }> {
+export async function allocate(i: { exitBillId: string; entryBillId: string; packages: number; weightKg: string }, user: CurrentUser, meta: Meta): Promise<{ warnings: string[] }> {
   if (!Number.isInteger(i.packages) || i.packages <= 0) throw new AppError(422, "Packages must be a whole number above zero");
   return db.transaction(async (tx) => {
     const warnings: string[] = [];
@@ -208,18 +227,15 @@ export async function allocate(i: { exitBillId: string; entryBillId: string; pac
     if (exitTotal.n + i.packages > ex.packages) throw new AppError(422, `The exit has ${ex.packages} packages and ${exitTotal.n} are already allocated: ${ex.packages - exitTotal.n} left to allocate`);
     const [entryTotal] = await tx.select({ n: sql<number>`coalesce(sum(${billAllocations.packages}), 0)::int` }).from(billAllocations).where(eq(billAllocations.entryBillId, en.id));
     const after = entryTotal.n + i.packages;
-    let reason: string | null = null;
     if (after > en.packages) {
-      const over = after - en.packages;
-      if (over > Math.floor(en.packages * OVER_EXPORT_TOLERANCE)) throw new AppError(409, `Not enough stock: ${en.billNo} has ${en.packages - entryTotal.n} packages left and this would take ${over} more than were imported (more than ${OVER_EXPORT_TOLERANCE * 100}% over).`);
-      if (!i.reason || i.reason.trim().length < 5) throw new AppError(422, `This takes ${over} packages more than ${en.billNo} imported. Give a reason (at least 5 characters), e.g. repacking or a count correction.`);
-      reason = i.reason.trim().slice(0, 200);
+      const left = en.packages - entryTotal.n;
+      throw new AppError(409, left > 0 ? `Not enough stock: ${en.billNo} has only ${left} packages left and this would take ${i.packages}.` : `Not enough stock: all ${en.packages} packages of ${en.billNo} have already been exported.`);
     }
-    const [row] = await tx.insert(billAllocations).values({ exitBillId: ex.id, entryBillId: en.id, packages: i.packages, weightKg: i.weightKg, overReason: reason, createdBy: user.id })
-      .onConflictDoUpdate({ target: [billAllocations.exitBillId, billAllocations.entryBillId], set: { packages: sql`${billAllocations.packages} + ${i.packages}`, weightKg: sql`${billAllocations.weightKg} + ${i.weightKg}`, overReason: reason ?? sql`${billAllocations.overReason}` } }).returning();
+    const [row] = await tx.insert(billAllocations).values({ exitBillId: ex.id, entryBillId: en.id, packages: i.packages, weightKg: i.weightKg, createdBy: user.id })
+      .onConflictDoUpdate({ target: [billAllocations.exitBillId, billAllocations.entryBillId], set: { packages: sql`${billAllocations.packages} + ${i.packages}`, weightKg: sql`${billAllocations.weightKg} + ${i.weightKg}` } }).returning();
     const [w] = await tx.select({ kg: sql<string>`coalesce(sum(${billAllocations.weightKg}), 0)` }).from(billAllocations).where(eq(billAllocations.entryBillId, en.id));
     if (Number(en.weightKg) > 0 && Number(w.kg) > Number(en.weightKg) * (1 + WEIGHT_WARNING)) warnings.push(`Weight check: ${Number(w.kg).toLocaleString("en-US")} kg is now linked from ${en.billNo}, more than the ${Number(en.weightKg).toLocaleString("en-US")} kg imported (over ${WEIGHT_WARNING * 100}%).`);
-    await audit({ action: "allocate", entity: "exit_bill", entityId: ex.id, after: { entry: en.billNo, exit: ex.boeNo, packages: i.packages, total: row.packages, overReason: reason, warnings }, ...who(user, meta) }, tx);
+    await audit({ action: "allocate", entity: "exit_bill", entityId: ex.id, after: { entry: en.billNo, exit: ex.boeNo, packages: i.packages, total: row.packages, warnings }, ...who(user, meta) }, tx);
     return { warnings };
   });
 }

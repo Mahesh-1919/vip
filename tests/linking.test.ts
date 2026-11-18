@@ -14,7 +14,7 @@ const entry: Record<string, string> = {}, exit: Record<string, string> = {};
 
 const mkEntry = async (key: string, packages: number, date: number) => { [{ id: entry[key] }] = await db.insert(entryBills).values({ billDate: d(date), billNo: `${tag}-${key}`, packages, weightKg: String(packages * 10), valueAed: "1000" }).returning({ id: entryBills.id }); };
 const mkExit = async (key: string, over: Partial<typeof exitBills.$inferInsert>) => { [{ id: exit[key] }] = await db.insert(exitBills).values({ exitDate: d(-3), boeNo: `${tag}-${key}`, billType: "EXPORT", packages: 10, valueAed: "1000", customerId: custA, ...over }).returning({ id: exitBills.id }); };
-const alloc = (x: string, e: string, packages: number, reason: string | null = null) => fz.allocate({ exitBillId: exit[x], entryBillId: entry[e], packages, weightKg: "0", reason }, user, meta);
+const alloc = (x: string, e: string, packages: number) => fz.allocate({ exitBillId: exit[x], entryBillId: entry[e], packages, weightKg: "0" }, user, meta);
 const bill = (customerId: string, lines: [string, number][], issue = d(0)) => xb.createExitInvoice({ customerId, issueDate: issue, dueDate: null, notes: null, lines: lines.map(([k, packages]) => ({ exitBillId: exit[k], packages })) }, user, meta);
 const remaining = async (e: string) => (await fz.getEntryDetail(entry[e]))!.remaining;
 
@@ -73,16 +73,16 @@ describe("linking exit bills to entry bills", () => {
     await expect(alloc("X6", "E1", 1)).rejects.toMatchObject({ status: 422 }); // exit dated before the entry
   });
 
-  it("over-export: small excess needs a reason, a large one is refused", async () => {
-    // E1 is fully used (100/100). X5 has 3 packages: 3 over is inside the 10% tolerance (10 pkgs)
-    await expect(alloc("X5", "E1", 3)).rejects.toMatchObject({ status: 422 }); // reason required
-    await alloc("X5", "E1", 3, "Repacked into smaller cartons");
-    expect(await remaining("E1")).toBe(-3);
-    const [a] = await db.select().from(billAllocations).where(eq(billAllocations.exitBillId, exit.X5));
-    expect(a.overReason).toMatch(/Repacked/);
-    await mkExit("X8", { packages: 20 });
-    await expect(alloc("X8", "E1", 20, "trying anyway")).rejects.toMatchObject({ status: 409 }); // would be 23 over (> 10%)
+  it("stock can never go negative: an entry cannot supply more than it imported", async () => {
+    // E1 is fully used (100/100): even one more package is refused
+    await expect(alloc("X5", "E1", 3)).rejects.toMatchObject({ status: 409 });
+    expect(await remaining("E1")).toBe(0);
+    // E2 has 50, X7 took 20: asking for 31 (> 30 left) is refused, 3 is fine
+    await mkExit("X8", { packages: 31 });
+    await expect(alloc("X8", "E2", 31)).rejects.toMatchObject({ status: 409 });
     await db.delete(exitBills).where(eq(exitBills.id, exit.X8));
+    await alloc("X5", "E2", 3);
+    expect(await remaining("E2")).toBe(27);
   });
 
   it("two people allocating the last packages at once cannot both succeed", async () => {
@@ -212,7 +212,7 @@ describe("stock rules: only linked goods are invoiced", () => {
 
   it("warns when the linked weight is well above the imported weight", async () => {
     await mkExit("X12", { packages: 2, valueAed: "100" });
-    const r = await fz.allocate({ exitBillId: exit.X12, entryBillId: entry.E3, packages: 1, weightKg: "999999", reason: null }, user, meta);
+    const r = await fz.allocate({ exitBillId: exit.X12, entryBillId: entry.E3, packages: 1, weightKg: "999999" }, user, meta);
     expect(r.warnings[0]).toMatch(/Weight check/);
   });
 
@@ -238,10 +238,10 @@ describe("shipment trace", () => {
     const { traces, unlinkedExits } = await trace.traceEntries({ q: "TSTU7654321" });
     const t = traces.find((x) => x.entry.id === entry.E1)!;
     expect(t.entry.packages).toBe(100);
-    expect(t.exported).toBe(103); // X1 60 + X2 40 + X5 3 (tolerance)
-    expect(t.remaining).toBe(-3);
+    expect(t.exported).toBe(100); // X1 60 + X2 40
+    expect(t.remaining).toBe(0);
     const byName = Object.fromEntries(t.customers.map((c) => [c.name, c.packages]));
-    expect(byName[`${tag} A`]).toBe(63); expect(byName[`${tag} B`]).toBe(40);
+    expect(byName[`${tag} A`]).toBe(60); expect(byName[`${tag} B`]).toBe(40);
     const x1 = t.exits.find((e) => e.exit.id === exit.X1)!;
     expect(x1.billed.pk).toBe(60); expect(x1.billed.invoices.length).toBeGreaterThan(0);
     expect(trace.containersOf(t.entry.marksNumbers)).toEqual(["TSTU1234567", "TSTU7654321"]);

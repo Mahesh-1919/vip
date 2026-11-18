@@ -42,5 +42,4 @@ export const allocationSchema = z.object({
   exitBillId: z.uuid(), entryBillId: z.uuid("Choose the entry bill"),
   packages: z.string().trim().regex(/^\d{1,9}$/, "Packages must be a whole number").transform(Number),
   weightKg: amount,
-  reason: text(200),
 });

@@ -6,7 +6,7 @@ import { requirePermission } from "@/lib/auth";
 import { formatSheetDate } from "@/lib/dates";
 import { formatAED } from "@/lib/money";
 import { customerOptions } from "@/services/billing";
-import { entriesForExit, getExitDetail, OVER_EXPORT_TOLERANCE } from "@/services/freezone";
+import { entriesForExit, getExitDetail } from "@/services/freezone";
 import { ActionForm } from "@/components/action-form";
 import { DataTable, type Column } from "@/components/data-table";
 import { SelectField, TextField } from "@/components/form-field";
@@ -40,7 +40,6 @@ export default async function ExitPage({ params }: PageProps<"/freezone/exits/[i
     { key: "a", header: "Agent", cell: ({ agent }) => agent },
     { key: "p", header: "Packages taken", align: "right", cell: ({ a, entryPackages }) => <>{n(a.packages)} <span className="text-xs text-muted-foreground">of {n(entryPackages)}</span></> },
     { key: "w", header: "Weight (kg)", align: "right", cell: ({ a }) => n(a.weightKg) },
-    { key: "r", header: "Note", cell: ({ a }) => a.overReason ? <Badge variant="warning" title={a.overReason}>Over-export: {a.overReason}</Badge> : "" },
     ...(canWrite && !invoiced ? [{ key: "x", header: "", cell: ({ a }: { a: { id: string } }) => <form action={removeAllocationAction}><input type="hidden" name="id" value={a.id} /><Button size="sm" variant="ghost" type="submit">Remove</Button></form> }] : []),
   ];
   const billCols: Column<(typeof billing)[number]>[] = [
@@ -66,13 +65,12 @@ export default async function ExitPage({ params }: PageProps<"/freezone/exits/[i
         <CardContent className="px-0"><DataTable className="rounded-none border-x-0 border-b-0 shadow-none" columns={allocCols} rows={allocations} rowKey={({ a }) => a.id} empty={{ title: "Not linked to any entry bill yet" }} /></CardContent></Card>
       {canWrite && invoiced && <p className="text-sm text-muted-foreground">This exit bill is invoiced, so its links are locked.</p>}
       {canWrite && !invoiced && unallocated > 0 && (
-        <Card><CardHeader><CardTitle>Link to an entry bill</CardTitle><CardDescription>{n(unallocated)} packages still to trace. Taking more than an entry imported is allowed up to {OVER_EXPORT_TOLERANCE * 100}% with a reason (e.g. repacking).</CardDescription></CardHeader><CardContent>
+        <Card><CardHeader><CardTitle>Link to an entry bill</CardTitle><CardDescription>{n(unallocated)} packages still to trace. You cannot take more than an entry still has in stock.</CardDescription></CardHeader><CardContent>
           <ActionForm action={allocateAction} submit="Link packages" className="grid gap-4 sm:grid-cols-4">
             <input type="hidden" name="exitBillId" value={exit.id} />
             <SelectField className="sm:col-span-4" name="entryBillId" label="Entry bill" required placeholder="Choose…" options={entries.map((x) => ({ value: x.id, label: `${x.billNo} · ${formatSheetDate(x.billDate)} · ${x.agent ?? "—"} · ${x.remaining} of ${x.packages} left${x.marks ? ` · ${x.marks}` : ""}` }))} />
             <TextField name="packages" label="Packages" inputMode="numeric" required defaultValue={unallocated} />
-            <TextField name="weightKg" label="Weight (kg)" inputMode="decimal" />
-            <TextField className="sm:col-span-2" name="reason" label="Reason (only if over the entry's count)" maxLength={200} />
+            <TextField name="weightKg" label="Weight (kg)" inputMode="decimal" className="sm:col-span-2" />
           </ActionForm>
         </CardContent></Card>
       )}

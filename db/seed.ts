@@ -239,7 +239,7 @@ async function seedLinks() {
       if (need <= 0) break;
       if (have <= 0 || e.billDate > x.exitDate) continue;
       const take = Math.min(have, need);
-      await freezoneSvc.allocate({ exitBillId: x.id, entryBillId: e.id, packages: take, weightKg: "0", reason: null }, ops, meta);
+      await freezoneSvc.allocate({ exitBillId: x.id, entryBillId: e.id, packages: take, weightKg: "0" }, ops, meta);
       left.set(e.id, have - take); need -= take;
     }
   }

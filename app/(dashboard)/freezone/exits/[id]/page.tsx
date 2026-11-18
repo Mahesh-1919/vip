@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { z } from "zod";
 import { requirePermission } from "@/lib/auth";
-import { formatSheetDate } from "@/lib/dates";
+import { formatSheetDate, todayISO } from "@/lib/dates";
 import { formatAED } from "@/lib/money";
 import { customerOptions } from "@/services/billing";
 import { entriesForExit, getExitDetail } from "@/services/freezone";
@@ -13,9 +13,10 @@ import { SelectField, TextField } from "@/components/form-field";
 import { PageHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { allocateAction, deleteExitAction, removeAllocationAction } from "../actions";
+import { createExitInvoiceAction } from "../../../sales/actions";
 import { ExitForm } from "../exit-form";
 
 export const metadata: Metadata = { title: "Exit bill" };
@@ -33,6 +34,9 @@ export default async function ExitPage({ params }: PageProps<"/freezone/exits/[i
   const invoiced = Number(billedPkgs) > 0;
   const [customers, entries] = await Promise.all([customerOptions(), canWrite && !invoiced && unallocated > 0 ? entriesForExit(exit.id) : Promise.resolve([])]);
   const isExport = exit.billType === "EXPORT";
+  // Packages that can be invoiced right now: linked to stock and not yet on an invoice (same rule as the server).
+  const invoiceable = Math.max(0, Math.min(allocated, exit.packages) - Number(billedPkgs));
+  const invoiceAmount = invoiceable >= unbilled ? Number(exit.valueAed) - Number(billedValue) : Math.round((Number(exit.valueAed) * invoiceable * 100) / Math.max(1, exit.packages)) / 100;
 
   const allocCols: Column<(typeof allocations)[number]>[] = [
     { key: "e", header: "Entry bill", cell: ({ billNo, entryId }) => <Link href={`/freezone/entries/${entryId}`} className="font-mono text-[0.8125rem] text-primary hover:underline">{billNo}</Link> },
@@ -81,10 +85,27 @@ export default async function ExitPage({ params }: PageProps<"/freezone/exits/[i
           <DataTable className="rounded-none border-x-0 shadow-none" columns={billCols} rows={billing} rowKey={(b) => b.invoiceId + b.qty} empty={{ title: isExport ? "Not invoiced yet" : "Not applicable" }}
             footer={billing.length ? { i: "Total", q: n(billedPkgs), v: n(billedValue, 2) } : undefined} />
           {isExport && user.permissions.has("sales:invoice:write") && (
-            <div className="px-6 pb-5">
-              {!exit.customerId ? <p className="text-sm text-warning">Link a customer above before invoicing this bill.</p>
-                : unbilled > 0 ? <Link className={buttonVariants()} href={`/sales/invoices/new?customerId=${exit.customerId}&exit=${exit.id}`}>Invoice this bill ({n(unbilled)} packages left)</Link>
-                : <p className="text-sm text-success">Fully invoiced.</p>}
+            <div className="px-6 pb-6">
+              {!exit.customerId ? <p className="text-sm text-warning">Choose a customer in “Bill details” below before invoicing this bill.</p>
+                : unbilled <= 0 ? <p className="text-sm text-success">Fully invoiced.</p>
+                : Number(exit.valueAed) <= 0 ? <p className="text-sm text-warning">This bill has no value yet. Enter the value in “Bill details” below, then invoice it.</p>
+                : invoiceable <= 0 ? <p className="text-sm text-warning">None of the remaining packages is linked to stock. Link them to an entry bill above before invoicing.</p>
+                : (
+                  <div className="flex flex-col gap-4 rounded-2xl bg-muted p-5">
+                    <div>
+                      <div className="font-medium">Create the invoice for this bill</div>
+                      <p className="text-sm text-muted-foreground">{n(invoiceable)} packages can be invoiced now ({formatAED(invoiceAmount)} at 0% VAT){invoiceable < unbilled ? `; the other ${n(unbilled - invoiceable)} are not linked to stock yet` : ""}. Lower the packages to invoice only part of it.</p>
+                    </div>
+                    <ActionForm action={createExitInvoiceAction} submit={`Create invoice (${formatAED(invoiceAmount)})`} resetOnSuccess={false} className="grid gap-4 sm:grid-cols-3"
+                      confirm="This issues a tax invoice with the next number. It cannot be edited or deleted afterwards. You can record the customer's payments on it afterwards, in part or in full.">
+                      <input type="hidden" name="customerId" value={exit.customerId} />
+                      <TextField name={`pk:${exit.id}`} label="Packages to invoice" inputMode="numeric" required defaultValue={invoiceable} />
+                      <TextField name="issueDate" label="Invoice date" type="date" required defaultValue={todayISO()} />
+                      <TextField name="dueDate" label="Due date" type="date" hint="Blank = customer's credit days." />
+                    </ActionForm>
+                    <Link className="text-sm text-primary hover:underline" href={`/sales/invoices/new?customerId=${exit.customerId}&exit=${exit.id}`}>Invoice several export bills of this customer on one invoice →</Link>
+                  </div>
+                )}
             </div>
           )}
         </CardContent></Card>

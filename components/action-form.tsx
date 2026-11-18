@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
  * Form wrapper for server actions. Keeps input on error (React 19 resets uncontrolled forms),
  * clears after success, reports through sonner toasts + inline text, and can require a confirmation dialog.
  */
-export function ActionForm({ action, submit, className, variant, children, resetOnSuccess = true, confirm }: {
+export function ActionForm({ action, submit, className, variant, children, resetOnSuccess = true, confirm, disabled }: {
   action: (s: ActionState, f: FormData) => Promise<ActionState>;
   submit: string;
   className?: string;
@@ -21,6 +21,8 @@ export function ActionForm({ action, submit, className, variant, children, reset
   resetOnSuccess?: boolean;
   /** When set, an AlertDialog with this message is shown before submitting. */
   confirm?: string;
+  /** Disables the submit button (e.g. nothing selected yet). */
+  disabled?: boolean;
   children?: React.ReactNode;
 }) {
   const [state, run, pending] = useActionState(action, undefined);
@@ -48,7 +50,7 @@ export function ActionForm({ action, submit, className, variant, children, reset
       <form ref={formRef} className={className} onSubmit={(e) => { e.preventDefault(); if (confirm) setConfirming(true); else submitNow(); }}>
         {children}
         <div className="flex flex-wrap items-center gap-3 sm:col-span-full">
-          <Button type="submit" variant={variant} disabled={pending}>{pending ? "Working…" : submit}</Button>
+          <Button type="submit" variant={variant} disabled={pending || disabled}>{pending ? "Working…" : submit}</Button>
           {state?.error && <span role="alert" className="text-sm text-destructive">{state.error}</span>}
         </div>
       </form>

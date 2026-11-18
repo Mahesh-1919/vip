@@ -44,16 +44,16 @@ export default async function InvoicePage({ params }: PageProps<"/sales/invoices
     { key: "x", header: "Reference", cell: (p) => <span className="text-xs text-muted-foreground">{p.reference}</span> },
   ];
   return (
-    <div className="max-w-4xl flex flex-col gap-5">
+    <div className="max-w-6xl flex flex-col gap-5">
       <PageHeader back={{ href: "/sales/invoices", label: "Invoices" }} title={<span className="font-mono">{inv.number}</span>}
         description={<>{customer.name} · sale <Link className="text-primary hover:underline" href={`/sales/${sale.id}`}>{sale.ref}</Link> · issued {formatDate(inv.issueDate)} · due {formatDate(inv.dueDate)}</>}
-        actions={<><StatusBadge status={state} /><a href={`/api/sales/invoices/${inv.id}/pdf`} className={buttonVariants({ variant: "outline" })}>Download PDF</a></>} />
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"><StatCard label="Subtotal" value={formatAED(inv.subtotal)} /><StatCard label="VAT" value={formatAED(inv.vatTotal)} /><StatCard label="Total" value={formatAED(inv.total)} /><StatCard label="Outstanding" value={formatAED(outstanding.toFixed(2))} tone={state === "overdue" ? "danger" : undefined} /></div>
+        actions={<><StatusBadge status={state} />{canPay && <a href="#record-payment" className={buttonVariants()}>Record payment</a>}<a href={`/api/sales/invoices/${inv.id}/pdf`} className={buttonVariants({ variant: "outline" })}>Download PDF</a></>} />
+      <div className="grid gap-3 sm:grid-cols-3"><StatCard label="Invoice total" value={formatAED(inv.total)} hint={`Subtotal ${formatAED(inv.subtotal)} · VAT ${formatAED(inv.vatTotal)}`} /><StatCard label="Paid so far" value={formatAED(inv.paidAmount)} tone={Number(inv.paidAmount) > 0 ? "success" : undefined} hint={`${payments.length} ${payments.length === 1 ? "payment" : "payments"}`} /><StatCard featured={state !== "overdue" && outstanding.gt(0)} label="Outstanding" value={formatAED(outstanding.toFixed(2))} tone={state === "overdue" ? "danger" : undefined} hint={outstanding.gt(0) ? "Still to be paid" : "Fully paid"} /></div>
       <DataTable columns={lineCols} rows={lines} rowKey={(l) => l.id} />
       <p className="text-xs text-muted-foreground">Issued by {inv.parties.company.name} (TRN {inv.parties.company.trn}) to {inv.parties.customer.name}{inv.parties.customer.trn ? ` (TRN ${inv.parties.customer.trn})` : ""}. An issued tax invoice cannot be changed.</p>
       <Card className="gap-0 overflow-hidden py-0"><CardHeader className="py-5"><CardTitle>Payments</CardTitle></CardHeader><CardContent className="px-0"><DataTable className="rounded-none border-x-0 border-b-0 shadow-none" columns={payCols} rows={payments} rowKey={(p) => p.id} empty={{ title: "No payments yet" }} /></CardContent></Card>
       {canPay && (
-        <Card><CardHeader><CardTitle>Record payment</CardTitle><CardDescription>Outstanding AED {n(outstanding.toFixed(2))}. A payment cannot exceed this.</CardDescription></CardHeader><CardContent>
+        <Card id="record-payment" className="scroll-mt-20"><CardHeader><CardTitle>Record a payment</CardTitle><CardDescription>Outstanding AED {n(outstanding.toFixed(2))}. Enter what the customer paid: the full amount, or a part now and the rest later. A payment cannot exceed the outstanding amount.</CardDescription></CardHeader><CardContent>
           <ActionForm action={paymentAction} submit="Record payment" className="grid gap-4 sm:grid-cols-4">
             <input type="hidden" name="invoiceId" value={inv.id} />
             <TextField name="amount" label="Amount (AED)" inputMode="decimal" required defaultValue={outstanding.toFixed(2)} />

@@ -41,13 +41,16 @@ function connect() {
 }
 
 async function createDemoDb() {
-  const [{ PGlite }, { drizzle: pglite }, { migrate }] = await Promise.all([
+  const [{ PGlite }, { drizzle: pglite }, { DEMO_MIGRATIONS }] = await Promise.all([
     import("@electric-sql/pglite"),
     import("drizzle-orm/pglite"),
-    import("drizzle-orm/pglite/migrator"),
+    import("./demo-migrations"),
   ]);
   const d = pglite(new PGlite(), { schema, casing: "snake_case" });
-  await migrate(d, { migrationsFolder: "./drizzle" });
+  // Same as drizzle's migrate(), but from the inlined list (no files to read at runtime).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- internal drizzle members, as used by its own migrator
+  const internal = d as any;
+  await internal.dialect.migrate(DEMO_MIGRATIONS, internal.session, {});
   return d as unknown as PostgresJsDatabase<typeof schema>;
 }
 

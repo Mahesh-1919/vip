@@ -3,7 +3,7 @@ import * as OTPAuth from "otpauth";
 
 const mk = (secret: string, label: string) =>
   new OTPAuth.TOTP({
-    issuer: process.env.APP_NAME ?? "Mini ERP",
+    issuer: process.env.APP_NAME || "Vip Internationala",
     label,
     algorithm: "SHA1",
     digits: 6,

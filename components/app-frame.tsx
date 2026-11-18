@@ -114,7 +114,7 @@ export function AppFrame({ appName, companyName, sections, user, logout, childre
               <DropdownMenuLabel className="font-normal text-xs text-muted-foreground">{user.email}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild><Link href="/account/security"><ShieldCheck /> Security</Link></DropdownMenuItem>
-              <DropdownMenuItem onSelect={(e) => { e.preventDefault(); startTransition(() => { void logout(); }); }}><LogOut /> Sign out</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => { startTransition(() => { void logout(); }); }}><LogOut /> Sign out</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </header>

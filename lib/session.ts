@@ -79,7 +79,8 @@ export async function destroySession() {
   const jar = await cookies();
   const token = jar.get(SESSION_COOKIE)?.value;
   if (token) await db.update(sessions).set({ revokedAt: new Date() }).where(eq(sessions.tokenHash, sha256(token)));
-  jar.delete(SESSION_COOKIE);
+  // A __Host- cookie is only removed by an expiry that carries the same attributes (Secure, Path=/).
+  jar.set(SESSION_COOKIE, "", { httpOnly: true, secure: IS_PROD, sameSite: "lax", path: "/", maxAge: 0, expires: new Date(0) });
 }
 
 export async function revokeAllSessions(userId: string) {

@@ -261,8 +261,8 @@ async function seedLinks() {
   if (groups[2] && groups[2][1].length > 1) { const [cid, xs] = groups[2]; await exitBilling.createExitInvoice({ customerId: cid, issueDate: day(-9), dueDate: null, notes: "Consolidated", lines: xs.slice(0, 2).map((x) => ({ exitBillId: x.id, packages: x.packages })) }, sales, meta); }
 }
 
-async function main() {
-  if (process.env.NODE_ENV === "production") throw new Error("Refusing to seed demo data in production");
+export async function seedDemo() {
+  if (process.env.NODE_ENV === "production" && process.env.DATA_MODE === "db") throw new Error("Refusing to seed demo data into a production database");
   const password = process.env.SEED_PASSWORD ?? "ChangeMe@123";
 
   for (const r of DEFAULT_ROLES) {
@@ -288,4 +288,6 @@ async function main() {
   console.log(`Seeded ${DEFAULT_ROLES.length} roles and ${USERS.length} users (password: ${password})`);
 }
 
-main().then(() => sql.end()).catch(async (e) => { console.error(e); await sql.end(); process.exit(1); });
+if (process.argv[1]?.endsWith("seed.ts")) {
+  seedDemo().then(() => sql.end()).catch(async (e) => { console.error(e); await sql.end(); process.exit(1); });
+}

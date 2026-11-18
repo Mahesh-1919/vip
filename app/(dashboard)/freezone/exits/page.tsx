@@ -53,7 +53,7 @@ export default async function ExitsPage({ searchParams }: PageProps<"/freezone/e
     { key: "ship", header: "Shipping", cell: ({ e }) => e.shippingLine },
     { key: "cust", header: "Customer", cell: (r) => r.customer ?? <span className="text-xs text-warning">not linked</span> },
     { key: "link", header: "Linked to entries", cell: ({ e, allocated }) => <Badge variant={allocated === 0 ? "warning" : allocated >= e.packages ? "success" : "info"}>{allocated === 0 ? "Unlinked" : allocated >= e.packages ? "Fully" : `${num(allocated, 0)}/${num(e.packages, 0)}`}</Badge> },
-    { key: "inv", header: "Invoiced", cell: ({ e, billedPkgs }) => e.billType !== "EXPORT" ? <span className="text-muted-foreground">n/a</span> : Number(billedPkgs) === 0 ? <Badge variant="warning">Not invoiced</Badge> : Number(billedPkgs) >= e.packages ? <Badge variant="success">Invoiced</Badge> : <Badge variant="info">{num(billedPkgs, 0)}/{num(e.packages, 0)}</Badge> },
+    { key: "billed", header: "Invoiced", cell: ({ e, billedPkgs }) => e.billType !== "EXPORT" ? <span className="text-muted-foreground">n/a</span> : Number(billedPkgs) === 0 ? <Badge variant="warning">Not invoiced</Badge> : Number(billedPkgs) >= e.packages ? <Badge variant="success">Invoiced</Badge> : <Badge variant="info">{num(billedPkgs, 0)}/{num(e.packages, 0)}</Badge> },
   ];
   return (
     <div className="flex flex-col gap-4">

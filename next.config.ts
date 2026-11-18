@@ -29,7 +29,7 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
   poweredByHeader: false,
-  serverExternalPackages: ["@node-rs/argon2", "postgres", "@react-pdf/renderer"],
+  serverExternalPackages: ["@node-rs/argon2", "postgres", "@electric-sql/pglite", "@react-pdf/renderer"],
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

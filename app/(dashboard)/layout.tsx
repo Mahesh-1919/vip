@@ -13,7 +13,9 @@ import { logoutAction } from "../login/actions";
 export const instant = false;
 
 async function Shell({ children }: { children: React.ReactNode }) {
-  const [user, company] = await Promise.all([requireUser({ allowUnenrolled: true }), getCompany()]);
+  // Session first: it is the request-time (dynamic) access; the embedded demo database must not run during prerender.
+  const user = await requireUser({ allowUnenrolled: true });
+  const company = await getCompany();
   // Roles that must have 2FA are forced to enrol first: only the Security page is reachable.
   const needsEnrol = user.mfaRequired && !user.totpEnabled;
   const sections = needsEnrol ? [] : NAV

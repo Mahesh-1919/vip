@@ -1,5 +1,6 @@
 import "server-only";
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 import { and, eq, isNull, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { sessions } from "@/db/schema";
@@ -33,6 +34,7 @@ export async function createSession(userId: string, meta: { ip: string | null; u
 export async function getSessionRow() {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   if (!token) return null;
+  await connection(); // request-time boundary: the embedded demo database reads the clock while it runs
   const [row] = await db
     .select()
     .from(sessions)

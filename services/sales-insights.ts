@@ -3,7 +3,10 @@ import { sql } from "drizzle-orm";
 import { db } from "@/db";
 
 type Row = Record<string, unknown>;
-const rows = async <T extends Row>(q: ReturnType<typeof sql>) => (await db.execute(q)) as unknown as T[];
+const rows = async <T extends Row>(q: ReturnType<typeof sql>) => {
+  const r = (await db.execute(q)) as unknown as T[] | { rows: T[] }; // postgres-js returns rows; PGlite returns { rows }
+  return Array.isArray(r) ? r : r.rows;
+};
 
 /** Net value of a sale = sum of its lines (exact override when present). */
 const SALE_NET = sql`(select coalesce(sum(coalesce(l.net_override, l.qty * l.unit_price)), 0) from sale_lines l where l.sale_id = s.id)`;

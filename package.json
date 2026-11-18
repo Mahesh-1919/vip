@@ -9,12 +9,13 @@
     "lint": "eslint",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:seed": "tsx --conditions react-server --env-file=.env db/seed.ts",
-    "db:reset": "tsx --env-file=.env scripts/reset-db.ts",
+    "db:seed": "DATA_MODE=db tsx --conditions react-server --env-file=.env db/seed.ts",
+    "db:reset": "DATA_MODE=db tsx --env-file=.env scripts/reset-db.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
+    "@electric-sql/pglite": "^0.5.16",
     "@node-rs/argon2": "^2.2.2",
     "@react-pdf/renderer": "^4.9.0",
     "class-variance-authority": "^0.7.1",

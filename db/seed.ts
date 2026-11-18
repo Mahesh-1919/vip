@@ -13,9 +13,9 @@ import { encryptField } from "../lib/crypto";
 import { DEFAULT_ROLES } from "../lib/rbac";
 import { hashPassword } from "../lib/password";
 
-const USERS = [
+const USERS: { email: string; name: string; role: string; password?: string }[] = [
   { email: "sales@erp.local", name: "Sara Sales", role: "sales_manager" },
-  { email: "admin@erp.local", name: "Aisha Admin", role: "admin" },
+  { email: "admin@vip.com", name: "Admin", role: "admin", password: "admin" },
   { email: "hr@erp.local", name: "Hana HR", role: "hr_manager" },
   { email: "operations@erp.local", name: "Omar Operations", role: "operations_manager" },
 ];
@@ -277,8 +277,9 @@ export async function seedDemo() {
 
   const hash = await hashPassword(password);
   for (const u of USERS) {
+    const passwordHash = u.password ? await hashPassword(u.password) : hash;
     const [role] = await db.select().from(roles).where(eq(roles.key, u.role));
-    await db.insert(users).values({ email: u.email, name: u.name, roleId: role.id, passwordHash: hash }).onConflictDoNothing();
+    await db.insert(users).values({ email: u.email, name: u.name, roleId: role.id, passwordHash }).onConflictDoNothing();
   }
   await seedHr();
   await seedAttendance();

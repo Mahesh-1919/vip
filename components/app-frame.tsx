@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Fragment, useState } from "react";
+import { Fragment, startTransition, useState } from "react";
 import {
   LayoutDashboard, Users, CalendarCheck, Plane, Wallet, FileText, Clock, CalendarDays, Settings, Settings2,
   UserCog, ScrollText, Building2, PackagePlus, PackageMinus, Route, ShoppingCart, ReceiptText, Contact, ChevronDown, ShieldCheck, LogOut, type LucideIcon,
@@ -114,7 +114,7 @@ export function AppFrame({ appName, companyName, sections, user, logout, childre
               <DropdownMenuLabel className="font-normal text-xs text-muted-foreground">{user.email}</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild><Link href="/account/security"><ShieldCheck /> Security</Link></DropdownMenuItem>
-              <DropdownMenuItem asChild><form action={logout}><button type="submit" className="flex w-full items-center gap-2"><LogOut className="size-4" /> Sign out</button></form></DropdownMenuItem>
+              <DropdownMenuItem onSelect={(e) => { e.preventDefault(); startTransition(() => { void logout(); }); }}><LogOut /> Sign out</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </header>

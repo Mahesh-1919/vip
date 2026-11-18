@@ -3,7 +3,7 @@ import { id, createdAt, updatedAt, version } from "./_columns";
 import { users } from "./auth";
 import { customers } from "./sales";
 
-/** Free Zone Entry Bill Sheet: one row per bill of entry (goods coming into the zone). */
+/** Entry Bill Sheet: one row per bill of entry (goods coming in). */
 export const entryBills = pgTable(
   "entry_bills",
   {
@@ -35,7 +35,7 @@ export const entryBills = pgTable(
   (t) => [uniqueIndex("entry_bill_no_uq").on(t.billNo), index("entry_bill_date_idx").on(t.billDate), index("entry_agent_idx").on(t.agentName)],
 );
 
-/** Free Zone Exit Bill Sheet: one row per bill of exit. */
+/** Exit Bill Sheet: one row per bill of exit. */
 export const exitBills = pgTable(
   "exit_bills",
   {

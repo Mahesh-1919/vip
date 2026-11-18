@@ -23,7 +23,7 @@ const num = (v: string | number, d = 2) => new Intl.NumberFormat("en-US", { mini
 const date = (v: string) => (/^\d{4}-\d{2}-\d{2}$/.test(v) ? v : "");
 const tone = (s: string) => (s === "Pending" ? "warning" : s === "No Need" ? "secondary" : "success") as "warning" | "secondary" | "success";
 
-export default async function ExitsPage({ searchParams }: PageProps<"/freezone/exits">) {
+export default async function ExitsPage({ searchParams }: PageProps<"/bills/exits">) {
   const user = await requirePermission("freezone:exit:read");
   const sp = await searchParams;
   const params = { q: one(sp.q).slice(0, 80), type: one(sp.type), cert: one(sp.cert), refund: one(sp.refund), alloc: one(sp.alloc), billing: one(sp.billing), backing: one(sp.backing), from: date(one(sp.from)), to: date(one(sp.to)), size: one(sp.size) };
@@ -34,7 +34,7 @@ export default async function ExitsPage({ searchParams }: PageProps<"/freezone/e
   const columns: Column<(typeof res.rows)[number]>[] = [
     { key: "sl", header: "Sl", cell: ({ sl }) => sl, className: "sticky left-0 z-[1] w-12 min-w-12 bg-card text-muted-foreground", headClassName: "sticky left-0 z-20 w-12 min-w-12" },
     { key: "date", header: "Date", className: "sticky left-12 z-[1] w-24 min-w-24 whitespace-nowrap bg-card", headClassName: "sticky left-12 z-20 w-24 min-w-24", cell: ({ e }) => formatSheetDate(e.exitDate) },
-    { key: "boe", header: "BOE No", className: "sticky left-36 z-[1] min-w-44 whitespace-nowrap bg-card shadow-[1px_0_0_var(--border)]", headClassName: "sticky left-36 z-20 min-w-44 shadow-[1px_0_0_var(--border)]", cell: ({ e }) => <Link href={`/freezone/exits/${e.id}`} className="font-mono text-[0.8125rem] text-primary hover:underline">{e.boeNo}</Link> },
+    { key: "boe", header: "BOE No", className: "sticky left-36 z-[1] min-w-44 whitespace-nowrap bg-card shadow-[1px_0_0_var(--border)]", headClassName: "sticky left-36 z-20 min-w-44 shadow-[1px_0_0_var(--border)]", cell: ({ e }) => <Link href={`/bills/exits/${e.id}`} className="font-mono text-[0.8125rem] text-primary hover:underline">{e.boeNo}</Link> },
     { key: "imp", header: "Importer Name", cell: ({ e }) => e.importerName },
     { key: "ref", header: "Ref No", className: "font-mono text-[0.8125rem]", cell: ({ e }) => e.refNo },
     { key: "type", header: "Bill Type", cell: ({ e }) => <Badge variant={e.billType === "EXPORT" ? "info" : "secondary"}>{e.billType}</Badge> },
@@ -45,7 +45,7 @@ export default async function ExitsPage({ searchParams }: PageProps<"/freezone/e
     { key: "wt", header: "Weight (Kg)", align: "right", cell: ({ e }) => num(e.weightKg, 0) },
     { key: "pk", header: "No of Pkgs", align: "right", cell: ({ e }) => num(e.packages, 0) },
     { key: "cty", header: "Country", cell: ({ e }) => e.country },
-    { key: "trk", header: "Truck / Container No", className: "max-w-56 whitespace-normal font-mono text-[0.8125rem]", cell: ({ e }) => <span className="flex flex-wrap gap-x-2">{containersOf(e.truckContainerNo).map((c) => <Link key={c} href={`/freezone/exits?q=${encodeURIComponent(c)}`} className="text-primary hover:underline">{c}</Link>)}</span> },
+    { key: "trk", header: "Truck / Container No", className: "max-w-56 whitespace-normal font-mono text-[0.8125rem]", cell: ({ e }) => <span className="flex flex-wrap gap-x-2">{containersOf(e.truckContainerNo).map((c) => <Link key={c} href={`/bills/exits?q=${encodeURIComponent(c)}`} className="text-primary hover:underline">{c}</Link>)}</span> },
     { key: "cert", header: "T/Entry Cert", cell: ({ e }) => <Badge variant={tone(e.entryCertStatus)}>{e.entryCertStatus}</Badge> },
     { key: "cd", header: "Cheque Date", className: "whitespace-nowrap", cell: ({ e }) => formatSheetDate(e.chequeDate) },
     { key: "ca", header: "Cheque Amount", align: "right", cell: ({ e }) => (e.chequeAmount ? num(e.chequeAmount) : "") },
@@ -57,10 +57,10 @@ export default async function ExitsPage({ searchParams }: PageProps<"/freezone/e
   ];
   return (
     <div className="flex flex-col gap-4">
-      <PageHeader title="Free Zone Exit Bill Sheet" description={`Number of records: ${res.total}`}
+      <PageHeader title="Exit Bill Sheet" description={`Number of records: ${res.total}`}
         actions={<>
-          <a href={`/api/freezone/export?sheet=exits&${qs}`} className={buttonVariants({ variant: "outline" })}><Download size={16} />CSV</a>
-          {user.permissions.has("freezone:exit:write") && <Link href="/freezone/exits/new" className={buttonVariants()}><Plus size={16} />Add exit bill</Link>}
+          <a href={`/api/bills/export?sheet=exits&${qs}`} className={buttonVariants({ variant: "outline" })}><Download size={16} />CSV</a>
+          {user.permissions.has("freezone:exit:write") && <Link href="/bills/exits/new" className={buttonVariants()}><Plus size={16} />Add exit bill</Link>}
         </>} />
       <FilterBar>
         <FilterField label="Search"><Input name="q" defaultValue={params.q} placeholder="BOE, importer, ref, container…" className="w-60" /></FilterField>
@@ -70,7 +70,7 @@ export default async function ExitsPage({ searchParams }: PageProps<"/freezone/e
         <FilterField label="Invoicing"><NativeSelect name="billing" defaultValue={params.billing} wrapperClassName="w-36"><NativeSelectOption value="">Any</NativeSelectOption><NativeSelectOption value="none">Not invoiced</NativeSelectOption><NativeSelectOption value="partial">Partly invoiced</NativeSelectOption><NativeSelectOption value="full">Fully invoiced</NativeSelectOption></NativeSelect></FilterField>
         <FilterField label="Rows"><NativeSelect name="size" defaultValue={String(res.size)} wrapperClassName="w-20">{PAGE_SIZES.map((s) => <NativeSelectOption key={s} value={s}>{s}</NativeSelectOption>)}</NativeSelect></FilterField>
         <Button type="submit">Apply</Button>
-        <Link href="/freezone/exits" className={buttonVariants({ variant: "ghost" })}>Reset</Link>
+        <Link href="/bills/exits" className={buttonVariants({ variant: "ghost" })}>Reset</Link>
         <details className="group w-full" open={!!(params.cert || params.backing || params.from || params.to)}>
           <summary className="cursor-pointer text-sm text-primary select-none hover:underline">More filters</summary>
           <div className="mt-3 flex flex-wrap items-end gap-3 border-t pt-3">
@@ -82,7 +82,7 @@ export default async function ExitsPage({ searchParams }: PageProps<"/freezone/e
       </FilterBar>
       <DataTable dense scroll columns={columns} rows={res.rows} rowKey={({ e }) => e.id} empty={{ title: "No exit bills", hint: "Add the first exit bill, or change the filters." }}
         footer={{ sl: "Total", val: num(res.totals.value), wt: num(res.totals.weight, 0), pk: num(res.totals.packages, 0), ca: num(res.totals.cheques) }} />
-      <Pagination page={res.page} pages={res.pages} total={res.total} basePath="/freezone/exits" params={keep} />
+      <Pagination page={res.page} pages={res.pages} total={res.total} basePath="/bills/exits" params={keep} />
     </div>
   );
 }

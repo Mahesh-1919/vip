@@ -27,12 +27,12 @@ export const GET = route([], async (req, { user }) => {
     const data = await all((page) => listEntries({ ...f, page, size: 100 }));
     headers = ["Sl", "Bill Date", "Bill No", "Agent Name", "Transfer No", "Arrival Date", "Port of Loading", "Port of Discharge", "Invoice No", "Value (AED)", "Weight (Kg)", "No of Packages", "Stock", "Marks & Numbers", "Line"];
     rows = data.map(({ e, sl }) => [sl, formatSheetDate(e.billDate), e.billNo, e.agentName, e.transferNo, formatSheetDate(e.arrivalDate), e.portOfLoading, e.portOfDischarge, e.invoiceNo, e.valueAed, e.weightKg, e.packages, e.originCountry, e.marksNumbers, e.line]);
-    name = "free-zone-entry-bills";
+    name = "entry-bills";
   } else {
     const data = await all((page) => listExits({ ...f, page, size: 100 }));
     headers = ["Sl", "Date", "BOE No", "Importer Name", "Ref No", "Bill Type", "Port of Loading", "Port of Discharge", "Invoice No", "Value (AED)", "Weight (Kg)", "No of Packages", "Country", "Truck / Container No", "T/Entry Cert", "Cheque Date", "Cheque Amount", "Refund Status", "Shipping"];
     rows = data.map(({ e, sl }) => [sl, formatSheetDate(e.exitDate), e.boeNo, e.importerName, e.refNo, e.billType, e.portOfLoading, e.portOfDischarge, e.invoiceNo, e.valueAed, e.weightKg, e.packages, e.country, e.truckContainerNo, e.entryCertStatus, formatSheetDate(e.chequeDate), e.chequeAmount, e.refundStatus, e.shippingLine]);
-    name = "free-zone-exit-bills";
+    name = "exit-bills";
   }
   await audit({ action: "export", entity: f.sheet === "entries" ? "entry_bill" : "exit_bill", entityId: name, after: { rows: rows.length }, userId: user.id, userEmail: user.email });
   return new Response(toCsv(headers, rows), { headers: { "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": `attachment; filename="${name}-${new Date().toISOString().slice(0, 10)}.csv"`, "Cache-Control": "private, no-store", "X-Content-Type-Options": "nosniff" } });

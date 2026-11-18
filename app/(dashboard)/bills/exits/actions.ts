@@ -22,8 +22,8 @@ export async function saveExitAction(id: string | null, _: ActionState, form: Fo
   if (data.customerId && !data.importerName) data.importerName = (await db.select({ n: customers.name }).from(customers).where(eq(customers.id, data.customerId)))[0]?.n ?? null;
   try { await fz.saveExit(id, data as never, version, user, await clientMeta()); }
   catch (e) { if (e instanceof AppError) return { error: e.message }; throw e; }
-  revalidatePath("/freezone", "layout");
-  if (!id) redirect("/freezone/exits");
+  revalidatePath("/bills", "layout");
+  if (!id) redirect("/bills/exits");
   return { ok: "Saved" };
 }
 
@@ -31,8 +31,8 @@ export async function deleteExitAction(id: string): Promise<ActionState> {
   const user = await requirePermission("freezone:exit:write");
   try { await fz.deleteExit(z.uuid().parse(id), user, await clientMeta()); }
   catch (e) { if (e instanceof AppError) return { error: e.message }; throw e; }
-  revalidatePath("/freezone", "layout");
-  redirect("/freezone/exits");
+  revalidatePath("/bills", "layout");
+  redirect("/bills/exits");
 }
 
 export async function allocateAction(_: ActionState, form: FormData): Promise<ActionState> {
@@ -42,14 +42,14 @@ export async function allocateAction(_: ActionState, form: FormData): Promise<Ac
   let warnings: string[] = [];
   try { warnings = (await fz.allocate(p.data, user, await clientMeta())).warnings; }
   catch (e) { if (e instanceof AppError) return { error: e.message }; throw e; }
-  revalidatePath("/freezone", "layout");
+  revalidatePath("/bills", "layout");
   return { ok: warnings.length ? `Linked. ${warnings.join(" ")}` : "Linked" };
 }
 
 export async function removeAllocationAction(form: FormData) {
   const user = await requirePermission("freezone:exit:write");
   try { await fz.removeAllocation(z.uuid().parse(form.get("id")), user, await clientMeta()); } catch (e) { if (!(e instanceof AppError)) throw e; }
-  revalidatePath("/freezone", "layout");
+  revalidatePath("/bills", "layout");
 }
 
 /** New export bill straight from an entry bill's stock. */
@@ -63,6 +63,6 @@ export async function createExitFromStockAction(_: ActionState, form: FormData):
   let id: string;
   try { id = (await fz.createExitFromStock({ ...data, importerName: c.n } as never, entryBillId, user, await clientMeta())).exit.id; }
   catch (e) { if (e instanceof AppError) return { error: e.message }; throw e; }
-  revalidatePath("/freezone", "layout");
-  redirect(`/freezone/exits/${id}`);
+  revalidatePath("/bills", "layout");
+  redirect(`/bills/exits/${id}`);
 }

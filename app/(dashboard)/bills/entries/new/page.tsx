@@ -11,7 +11,7 @@ export default async function NewEntryPage() {
   await requirePermission("freezone:entry:write");
   return (
     <div className="max-w-4xl flex flex-col gap-5">
-      <PageHeader title="New entry bill" back={{ href: "/freezone/entries", label: "Entry bills" }} />
+      <PageHeader title="New entry bill" back={{ href: "/bills/entries", label: "Entry bills" }} />
       <Card><CardContent><EntryForm /></CardContent></Card>
     </div>
   );

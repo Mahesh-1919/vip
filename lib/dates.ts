@@ -20,7 +20,7 @@ export function formatDateMon(iso: string | null | undefined): string {
   const [y, m, d] = iso.slice(0, 10).split("-");
   return `${d}/${MON[Number(m) - 1]}/${y}`;
 }
-/** 3-Jan-26: the style used in the free-zone bill sheets. */
+/** 3-Jan-26: the style used in the bill sheets. */
 export function formatSheetDate(iso: string | null | undefined): string {
   if (!iso) return "";
   const [y, m, d] = iso.slice(0, 10).split("-");

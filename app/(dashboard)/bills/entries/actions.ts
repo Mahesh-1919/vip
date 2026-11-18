@@ -17,8 +17,8 @@ export async function saveEntryAction(id: string | null, _: ActionState, form: F
   const { version, packagesReason, ...data } = p.data;
   try { await fz.saveEntry(id, data as never, version, user, await clientMeta(), packagesReason); }
   catch (e) { if (e instanceof AppError) return { error: e.message }; throw e; }
-  revalidatePath("/freezone", "layout");
-  if (!id) redirect("/freezone/entries");
+  revalidatePath("/bills", "layout");
+  if (!id) redirect("/bills/entries");
   return { ok: "Saved" };
 }
 
@@ -26,6 +26,6 @@ export async function deleteEntryAction(id: string): Promise<ActionState> {
   const user = await requirePermission("freezone:entry:write");
   try { await fz.deleteEntry(z.uuid().parse(id), user, await clientMeta()); }
   catch (e) { if (e instanceof AppError) return { error: e.message }; throw e; }
-  revalidatePath("/freezone", "layout");
-  redirect("/freezone/entries");
+  revalidatePath("/bills", "layout");
+  redirect("/bills/entries");
 }

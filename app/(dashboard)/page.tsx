@@ -50,9 +50,9 @@ async function load(user: CurrentUser) {
   if (leave?.[0].n) attention.push({ label: "Leave requests awaiting approval", count: leave[0].n, href: "/hr/leave?status=pending", tone: "warning" });
   if (drafts?.[0].n) attention.push({ label: "Draft payroll runs to review", count: drafts[0].n, href: "/hr/payroll", tone: "warning" });
   if (expiring?.[0].n) attention.push({ label: "Staff documents expired or expiring (90 days)", count: expiring[0].n, href: "/hr/employees", tone: "danger" });
-  if (refund?.[0].n) attention.push({ label: "Exit bills with refund pending", count: refund[0].n, href: "/freezone/exits?refund=Pending", tone: "warning" });
-  if (cert?.[0].n) attention.push({ label: "Export bills awaiting T/Entry certificate", count: cert[0].n, href: "/freezone/exits?cert=Pending&type=EXPORT", tone: "warning" });
-  if (links?.unlinked && can("freezone:exit:read" as never)) attention.push({ label: "Exit bills not linked to an entry bill", count: links.unlinked, href: "/freezone/exits?alloc=none", tone: "warning" });
+  if (refund?.[0].n) attention.push({ label: "Exit bills with refund pending", count: refund[0].n, href: "/bills/exits?refund=Pending", tone: "warning" });
+  if (cert?.[0].n) attention.push({ label: "Export bills awaiting T/Entry certificate", count: cert[0].n, href: "/bills/exits?cert=Pending&type=EXPORT", tone: "warning" });
+  if (links?.unlinked && can("freezone:exit:read" as never)) attention.push({ label: "Exit bills not linked to an entry bill", count: links.unlinked, href: "/bills/exits?alloc=none", tone: "warning" });
   if (links?.unbilledExports && can("sales:invoice:write" as never)) attention.push({ label: "Export bills still to invoice", count: links.unbilledExports, href: "/sales/invoices/new", tone: "warning" });
   if (recv && recv.overdue.gt(0)) attention.push({ label: `Overdue invoices (${formatAED(recv.overdue.toFixed(2))})`, count: recv.rows.filter((r) => Number(r.overdue) > 0).length, href: "/sales/invoices?status=overdue", tone: "danger" });
   return { attention, staff: staff?.[0].n, entriesM: entriesM?.[0].n, exitsM: exitsM?.[0].n, salesM: salesM?.totals.net, outstanding: recv?.outstanding.toFixed(2), overdue: recv?.overdue.toFixed(2), stockPackages: can("freezone:entry:read" as never) ? links?.stockPackages : undefined, onLeave: onLeave?.[0].n, payroll: payroll?.[0], payrollKnown: !!payroll };
@@ -89,9 +89,9 @@ export default async function DashboardPage() {
     d.staff !== undefined && <StatCard key="s" label="Active staff" value={d.staff} href="/hr/employees" icon={<Users />} />,
     d.onLeave !== undefined && <StatCard key="l" label="Staff on leave today" value={d.onLeave} href="/hr/leave" icon={<CalendarOff />} />,
     d.payrollKnown && <StatCard key="p" label="Latest payroll (net)" value={d.payroll ? formatAED(d.payroll.net) : "—"} hint={d.payroll ? new Date(d.payroll.year, d.payroll.month - 1).toLocaleString("en-GB", { month: "long", year: "numeric" }) : "No finalised payroll yet"} href="/hr/payroll" icon={<Wallet />} />,
-    d.entriesM !== undefined && <StatCard key="e" label="Entry bills this month" value={d.entriesM} href="/freezone/entries" icon={<PackagePlus />} />,
-    d.exitsM !== undefined && <StatCard key="x" label="Exit bills this month" value={d.exitsM} href="/freezone/exits" icon={<PackageMinus />} />,
-    d.stockPackages !== undefined && <StatCard key="k" featured label="Packages in the zone" value={n(d.stockPackages)} hint="Imported and not yet exported" href="/freezone/entries?open=1" icon={<Boxes />} />,
+    d.entriesM !== undefined && <StatCard key="e" label="Entry bills this month" value={d.entriesM} href="/bills/entries" icon={<PackagePlus />} />,
+    d.exitsM !== undefined && <StatCard key="x" label="Exit bills this month" value={d.exitsM} href="/bills/exits" icon={<PackageMinus />} />,
+    d.stockPackages !== undefined && <StatCard key="k" featured label="Packages in stock" value={n(d.stockPackages)} hint="Imported and not yet exported" href="/bills/entries?open=1" icon={<Boxes />} />,
     d.salesM !== undefined && <StatCard key="m" label="Sales this month (net)" value={formatAED(d.salesM)} href="/sales" icon={<ShoppingCart />} />,
     d.outstanding !== undefined && <StatCard key="o" label="Outstanding receivables" value={formatAED(d.outstanding)} href="/sales/invoices" icon={<ReceiptText />} />,
     d.overdue !== undefined && <StatCard key="d" label="Overdue receivables" value={formatAED(d.overdue)} tone={Number(d.overdue) > 0 ? "danger" : undefined} href="/sales/invoices?status=overdue" icon={<CircleAlert />} />,
@@ -128,11 +128,11 @@ export default async function DashboardPage() {
 
       {(entries || exits) && (
         <div className="grid gap-6 lg:grid-cols-2">
-          {entries && <ListCard title="Latest entry bills" description="Goods arriving in the zone" href="/freezone/entries">
-            {entries.length ? entries.map((e) => <Row key={e.id} href={`/freezone/entries/${e.id}`}><span className="min-w-0"><span className="font-mono text-[0.8125rem]">{e.billNo}</span><span className="block truncate text-xs text-muted-foreground">{e.agent ?? "—"} · {formatSheetDate(e.date)}</span></span><span className="shrink-0 text-right"><b>{n(e.packages)}</b> <span className="text-xs text-muted-foreground">pkgs{e.origin ? ` · ${e.origin}` : ""}</span></span></Row>) : <Empty text="No entry bills yet." />}
+          {entries && <ListCard title="Latest entry bills" description="Goods that came in" href="/bills/entries">
+            {entries.length ? entries.map((e) => <Row key={e.id} href={`/bills/entries/${e.id}`}><span className="min-w-0"><span className="font-mono text-[0.8125rem]">{e.billNo}</span><span className="block truncate text-xs text-muted-foreground">{e.agent ?? "—"} · {formatSheetDate(e.date)}</span></span><span className="shrink-0 text-right"><b>{n(e.packages)}</b> <span className="text-xs text-muted-foreground">pkgs{e.origin ? ` · ${e.origin}` : ""}</span></span></Row>) : <Empty text="No entry bills yet." />}
           </ListCard>}
-          {exits && <ListCard title="Latest exit bills" description="Goods leaving the zone" href="/freezone/exits">
-            {exits.length ? exits.map((e) => <Row key={e.id} href={`/freezone/exits/${e.id}`}><span className="min-w-0"><span className="font-mono text-[0.8125rem]">{e.boeNo}</span><span className="block truncate text-xs text-muted-foreground">{e.importer ?? "—"} · {formatSheetDate(e.date)}</span></span><span className="flex shrink-0 items-center gap-3"><span><b>{n(e.packages)}</b> <span className="text-xs text-muted-foreground">pkgs</span></span><Badge variant={e.type === "EXPORT" ? "info" : "secondary"}>{e.type}</Badge></span></Row>) : <Empty text="No exit bills yet." />}
+          {exits && <ListCard title="Latest exit bills" description="Goods that went out" href="/bills/exits">
+            {exits.length ? exits.map((e) => <Row key={e.id} href={`/bills/exits/${e.id}`}><span className="min-w-0"><span className="font-mono text-[0.8125rem]">{e.boeNo}</span><span className="block truncate text-xs text-muted-foreground">{e.importer ?? "—"} · {formatSheetDate(e.date)}</span></span><span className="flex shrink-0 items-center gap-3"><span><b>{n(e.packages)}</b> <span className="text-xs text-muted-foreground">pkgs</span></span><Badge variant={e.type === "EXPORT" ? "info" : "secondary"}>{e.type}</Badge></span></Row>) : <Empty text="No exit bills yet." />}
           </ListCard>}
         </div>
       )}

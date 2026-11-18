@@ -64,15 +64,15 @@ export function ExitInvoiceForm({ customerId, rows, initial, today }: { customer
                 const blocked = r.value <= 0 ? "no-value" : r.invoiceable <= 0 ? "no-stock" : null;
                 return (
                   <tr key={r.id} className={cn(want > 0 && "bg-primary/5")}>
-                    <td className="px-3 py-3"><Link href={`/freezone/exits/${r.id}`} className="font-mono text-[0.8125rem] text-primary hover:underline">{r.boeNo}</Link>{r.containers && <div className="max-w-56 truncate font-mono text-xs text-muted-foreground">{r.containers}</div>}</td>
+                    <td className="px-3 py-3"><Link href={`/bills/exits/${r.id}`} className="font-mono text-[0.8125rem] text-primary hover:underline">{r.boeNo}</Link>{r.containers && <div className="max-w-56 truncate font-mono text-xs text-muted-foreground">{r.containers}</div>}</td>
                     <td className="whitespace-nowrap px-4 py-3">{r.date}{r.destination && <div className="text-xs text-muted-foreground">to {r.destination}</div>}</td>
                     <td className="px-3 py-3 text-right tabular-nums">{aed(r.value)}</td>
                     <td className="px-3 py-3 text-right tabular-nums">{n(r.packages)}</td>
                     <td className="px-3 py-3 text-right tabular-nums">{r.billedPkgs > 0 ? <Badge variant="info">{n(r.billedPkgs)}</Badge> : <span className="text-muted-foreground">0</span>}</td>
                     <td className="px-3 py-3 text-right tabular-nums">{blocked ? <span className="text-muted-foreground">0</span> : <Badge variant="success">{n(r.invoiceable)}</Badge>}</td>
                     <td className="px-3 py-3">
-                      {blocked === "no-value" ? <Link href={`/freezone/exits/${r.id}`} className="text-sm text-warning hover:underline">Add the bill value first →</Link>
-                        : blocked === "no-stock" ? <Link href={`/freezone/exits/${r.id}`} className="text-sm text-warning hover:underline">Link to stock first →</Link>
+                      {blocked === "no-value" ? <Link href={`/bills/exits/${r.id}`} className="text-sm text-warning hover:underline">Add the bill value first →</Link>
+                        : blocked === "no-stock" ? <Link href={`/bills/exits/${r.id}`} className="text-sm text-warning hover:underline">Link to stock first →</Link>
                         : <div className="flex items-center gap-2">
                             <Input name={`pk:${r.id}`} inputMode="numeric" value={pk[r.id] ?? ""} placeholder="0" aria-invalid={over || undefined} aria-label={`Packages to invoice for ${r.boeNo}`} className="w-28 text-right"
                               onChange={(e) => setPk((s) => ({ ...s, [r.id]: e.target.value.replace(/\D/g, "") }))} />

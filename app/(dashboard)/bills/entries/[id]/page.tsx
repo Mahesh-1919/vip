@@ -18,7 +18,7 @@ export const metadata: Metadata = { title: "Entry bill" };
 export const instant = false; // session-dependent page: see (dashboard)/layout.tsx
 const n = (v: string | number) => new Intl.NumberFormat("en-US").format(Number(v));
 
-export default async function EntryPage({ params }: PageProps<"/freezone/entries/[id]">) {
+export default async function EntryPage({ params }: PageProps<"/bills/entries/[id]">) {
   const user = await requirePermission("freezone:entry:read");
   const id = z.uuid().safeParse((await params).id);
   if (!id.success) notFound();
@@ -29,7 +29,7 @@ export default async function EntryPage({ params }: PageProps<"/freezone/entries
   const canSales = user.permissions.has("sales:invoice:read");
   const pct = entry.packages ? Math.min(100, Math.round((exported / entry.packages) * 100)) : 0;
   const cols: Column<(typeof allocations)[number]>[] = [
-    { key: "b", header: "Exit bill (BOE)", cell: ({ boeNo, exitId }) => user.permissions.has("freezone:exit:read") ? <Link href={`/freezone/exits/${exitId}`} className="font-mono text-[0.8125rem] text-primary hover:underline">{boeNo}</Link> : <span className="font-mono text-[0.8125rem]">{boeNo}</span> },
+    { key: "b", header: "Exit bill (BOE)", cell: ({ boeNo, exitId }) => user.permissions.has("freezone:exit:read") ? <Link href={`/bills/exits/${exitId}`} className="font-mono text-[0.8125rem] text-primary hover:underline">{boeNo}</Link> : <span className="font-mono text-[0.8125rem]">{boeNo}</span> },
     { key: "d", header: "Exit date", className: "whitespace-nowrap", cell: ({ exitDate }) => formatSheetDate(exitDate) },
     { key: "t", header: "Type", cell: ({ billType }) => <Badge variant={billType === "EXPORT" ? "info" : "secondary"}>{billType}</Badge> },
     { key: "c", header: "Customer", cell: ({ customer, importer }) => customer ?? importer },
@@ -39,12 +39,12 @@ export default async function EntryPage({ params }: PageProps<"/freezone/entries
   ];
   return (
     <div className="max-w-5xl flex flex-col gap-6">
-      <PageHeader title={<span className="font-mono">{entry.billNo}</span>} back={{ href: "/freezone/entries", label: "Entry bills" }} description={entry.agentName}
+      <PageHeader title={<span className="font-mono">{entry.billNo}</span>} back={{ href: "/bills/entries", label: "Entry bills" }} description={entry.agentName}
         actions={<>{remaining <= 0 ? <Badge variant="secondary">Fully exported</Badge> : exported > 0 ? <Badge variant="warning">Partly exported</Badge> : <Badge variant="success">In stock</Badge>}</>} />
       <div className="grid gap-3 sm:grid-cols-3">
         <StatCard label="Packages imported" value={n(entry.packages)} />
         <StatCard label="Exported so far" value={n(exported)} hint={`${pct}% of this entry, to ${byCustomer.length} ${byCustomer.length === 1 ? "customer" : "customers"} in ${allocations.length} exit ${allocations.length === 1 ? "bill" : "bills"}`} />
-        <StatCard featured={remaining > 0} label="Stock remaining in the zone" value={n(remaining)} hint={remaining === 0 ? "Nothing left" : `${100 - pct}% still available to export`} />
+        <StatCard featured={remaining > 0} label="Stock remaining" value={n(remaining)} hint={remaining === 0 ? "Nothing left" : `${100 - pct}% still available to export`} />
       </div>
       <div className="h-3 w-full overflow-hidden rounded-full bg-muted" role="img" aria-label={`${pct}% of this entry has been exported`}><div className="h-full rounded-full bg-primary" style={{ width: `${pct}%` }} /></div>
       {byCustomer.length > 0 && <Card className="gap-3"><CardHeader><CardTitle>Who received these goods</CardTitle><CardDescription>How this entry was distributed between customers.</CardDescription></CardHeader>

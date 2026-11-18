@@ -13,7 +13,7 @@ export default async function NewExitPage() {
   await requirePermission("freezone:exit:write");
   return (
     <div className="max-w-4xl flex flex-col gap-5">
-      <PageHeader title="New exit bill" description="Pick the import the goods come from, see what is in stock, and export up to that amount." back={{ href: "/freezone/exits", label: "Exit bills" }} />
+      <PageHeader title="New exit bill" description="Pick the import the goods come from, see what is in stock, and export up to that amount." back={{ href: "/bills/exits", label: "Exit bills" }} />
       <Card><CardContent><NewExitForm entries={await entriesWithStock()} customers={await customerOptions()} /></CardContent></Card>
     </div>
   );

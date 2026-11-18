@@ -131,7 +131,7 @@ async function seedAttendance() {
 }
 
 
-// ---------------- Free zone register (fictional data in the layout of the real sheets) ----------------
+// ---------------- Entry and exit bills register (fictional data in the layout of the real sheets) ----------------
 const AGENTS = ["Alpha Transit Freight L.L.C", "Gulf Shipping Commission", "Sama Cargo and Transport", "Delta Logistics FZE", "Horizon Customs Clearing"];
 const LOADING = [["Muscat", "Hatta Customs", "OMAN", "CN"], ["Riyadh", "Abu Dhabi", "SAUDI", "CN"], ["Bahrain", "Jebel Ali Port", "BAHRAIN", "BH"], ["Piraeus", "Jebel Ali Port", "GREECE", "GR"], ["Port Said", "Jebel Ali Port", "EGYPT", "TR"], ["Avcilar", "Jebel Ali Port", "TURKEY", "TR"], ["Hamriyah Freezone", "Saif Zone", "HAMRIYA", "GB"], ["Frankfurt am Main", "Dubai Airport FZ", "EUROPE", "CN"]];
 const DEST = [["Dar es Salaam", "TZ"], ["Mombasa", "KE"], ["Dakar", "SN"], ["Aqaba", "JO"], ["Luanda", "AO"], ["Pointe Noire", "CG"], ["Abidjan", "CI"], ["Matadi", "CD"]];
@@ -184,9 +184,9 @@ async function seedSales() {
   if (n > 0) return;
   await db.insert(customers).values([
     { name: "Delta Trading Co", contactName: "A. Rahman", phone: "+971 50 111 2233", email: "accounts@delta-trading.example", trn: "100456789000003", creditDays: 30, address: "Al Quoz, Dubai" },
-    { name: "Horizon General Trading", contactName: "M. Farouk", phone: "+971 55 222 3344", email: "finance@horizon-gt.example", trn: "100567890100003", creditDays: 45, address: "Sharjah Airport Free Zone" },
+    { name: "Horizon General Trading", contactName: "M. Farouk", phone: "+971 55 222 3344", email: "finance@horizon-gt.example", trn: "100567890100003", creditDays: 45, address: "Sharjah Airport, UAE" },
     { name: "Nile Import Export", contactName: "S. Mansour", phone: "+971 52 333 4455", email: "ops@nile-ie.example", creditDays: 30, address: "Deira, Dubai" },
-    { name: "Savanna Traders", contactName: "J. Kimani", phone: "+971 54 444 5566", email: "billing@savanna.example", creditDays: 15, address: "Hamriyah Free Zone, Sharjah" },
+    { name: "Savanna Traders", contactName: "J. Kimani", phone: "+971 54 444 5566", email: "billing@savanna.example", creditDays: 15, address: "Hamriyah, Sharjah, UAE" },
   ]);
   const cus = await db.select().from(customers);
   const [u] = await db.select().from(users).where(eq(users.email, "sales@erp.local"));

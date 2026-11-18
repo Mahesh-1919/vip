@@ -23,7 +23,7 @@ export const PERMISSIONS = [
   "sales:sale:read", "sales:sale:write",
   "sales:invoice:read", "sales:invoice:write",
   "sales:payment:write",
-  // Free zone register
+  // Entry and exit bills
   "freezone:entry:read", "freezone:entry:write",
   "freezone:exit:read", "freezone:exit:write",
 ] as const;
@@ -42,5 +42,5 @@ export const DEFAULT_ROLES: {
   { key: "admin", name: "Admin", description: "Full access to all modules, users and settings", permissions: all },
   { key: "hr_manager", name: "HR Manager", description: "HRMS module only", permissions: ["dashboard:view", ...by("hr:")] },
   { key: "sales_manager", name: "Sales Manager", description: "Customers, sales, invoices and payments", permissions: ["dashboard:view", ...by("sales:")] },
-  { key: "operations_manager", name: "Operations Manager", description: "Free zone entry and exit bills", permissions: ["dashboard:view", ...by("freezone:")] },
+  { key: "operations_manager", name: "Operations Manager", description: "Entry and exit bills", permissions: ["dashboard:view", ...by("freezone:")] },
 ];

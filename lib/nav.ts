@@ -23,8 +23,8 @@ export const NAV: NavSection[] = [
   {
     title: "Bills",
     items: [
-      { label: "Entry bills", href: "/freezone/entries", permission: "freezone:entry:read", icon: "PackagePlus" },
-      { label: "Exit bills", href: "/freezone/exits", permission: "freezone:exit:read", icon: "PackageMinus" },
+      { label: "Entry bills", href: "/bills/entries", permission: "freezone:entry:read", icon: "PackagePlus" },
+      { label: "Exit bills", href: "/bills/exits", permission: "freezone:exit:read", icon: "PackageMinus" },
     ],
   },
   {

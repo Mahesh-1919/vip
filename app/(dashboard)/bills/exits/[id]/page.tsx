@@ -23,7 +23,7 @@ export const metadata: Metadata = { title: "Exit bill" };
 export const instant = false; // session-dependent page: see (dashboard)/layout.tsx
 const n = (v: string | number, d = 0) => new Intl.NumberFormat("en-US", { minimumFractionDigits: d, maximumFractionDigits: d }).format(Number(v));
 
-export default async function ExitPage({ params }: PageProps<"/freezone/exits/[id]">) {
+export default async function ExitPage({ params }: PageProps<"/bills/exits/[id]">) {
   const user = await requirePermission("freezone:exit:read");
   const id = z.uuid().safeParse((await params).id);
   if (!id.success) notFound();
@@ -39,7 +39,7 @@ export default async function ExitPage({ params }: PageProps<"/freezone/exits/[i
   const invoiceAmount = invoiceable >= unbilled ? Number(exit.valueAed) - Number(billedValue) : Math.round((Number(exit.valueAed) * invoiceable * 100) / Math.max(1, exit.packages)) / 100;
 
   const allocCols: Column<(typeof allocations)[number]>[] = [
-    { key: "e", header: "Entry bill", cell: ({ billNo, entryId }) => <Link href={`/freezone/entries/${entryId}`} className="font-mono text-[0.8125rem] text-primary hover:underline">{billNo}</Link> },
+    { key: "e", header: "Entry bill", cell: ({ billNo, entryId }) => <Link href={`/bills/entries/${entryId}`} className="font-mono text-[0.8125rem] text-primary hover:underline">{billNo}</Link> },
     { key: "d", header: "Entry date", cell: ({ billDate }) => formatSheetDate(billDate) },
     { key: "a", header: "Agent", cell: ({ agent }) => agent },
     { key: "p", header: "Packages taken", align: "right", cell: ({ a, entryPackages }) => <>{n(a.packages)} <span className="text-xs text-muted-foreground">of {n(entryPackages)}</span></> },
@@ -55,7 +55,7 @@ export default async function ExitPage({ params }: PageProps<"/freezone/exits/[i
 
   return (
     <div className="max-w-5xl flex flex-col gap-6">
-      <PageHeader title={<span className="font-mono">{exit.boeNo}</span>} back={{ href: "/freezone/exits", label: "Exit bills" }} description={<>{exit.importerName}{d.customer && d.customer !== exit.importerName ? ` · customer: ${d.customer}` : ""}</>}
+      <PageHeader title={<span className="font-mono">{exit.boeNo}</span>} back={{ href: "/bills/exits", label: "Exit bills" }} description={<>{exit.importerName}{d.customer && d.customer !== exit.importerName ? ` · customer: ${d.customer}` : ""}</>}
         actions={<Badge variant={isExport ? "info" : "secondary"}>{exit.billType}</Badge>} />
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

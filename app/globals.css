@@ -123,8 +123,9 @@
 @layer base {
   /* Tailwind 4 defaults borders to currentColor: use the theme border colour everywhere. */
   *, ::before, ::after { border-color: var(--border); }
-  html { color-scheme: light dark; -webkit-text-size-adjust: 100%; }
-  body { background: var(--background); color: var(--foreground); font-family: var(--font-sans), system-ui, sans-serif; line-height: 1.5; }
+  html { color-scheme: light dark; -webkit-text-size-adjust: 100%; font-size: 18px; }
+  @media (min-width: 1536px) { html { font-size: 19px; } }
+  body { background: var(--background); color: var(--foreground); font-family: var(--font-sans), system-ui, sans-serif; line-height: 1.55; letter-spacing: -0.005em; }
   h1 { font-size: 1.75rem; line-height: 2.1rem; font-weight: 600; letter-spacing: -0.02em; text-wrap: balance; }
   h2 { font-weight: 600; letter-spacing: -0.01em; }
   a { text-underline-offset: 3px; }

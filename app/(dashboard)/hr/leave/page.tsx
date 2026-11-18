@@ -40,7 +40,7 @@ export default async function LeavePage({ searchParams }: PageProps<"/hr/leave">
           <TableBody>
             {rows.map(({ r, name, code, type }) => (
               <TableRow key={r.id} className="border-b border-border last:border-0 align-top">
-                <TableCell className="p-3">{name} <span className="font-mono text-xs text-muted-foreground">{code}</span>{r.reason && <div className="text-xs text-muted-foreground">{r.reason}</div>}</TableCell>
+                <TableCell className="p-3">{name} <span className="font-mono text-[0.8125rem] text-muted-foreground">{code}</span>{r.reason && <div className="text-xs text-muted-foreground">{r.reason}</div>}</TableCell>
                 <TableCell className="p-3">{type}</TableCell>
                 <TableCell className="p-3 whitespace-nowrap">{formatDate(r.fromDate)}{r.fromDate !== r.toDate && ` – ${formatDate(r.toDate)}`}{r.halfDay && <span className="text-xs text-muted-foreground"> ({r.halfDay} half)</span>}</TableCell>
                 <TableCell className="p-3 text-right">{Number(r.days)}</TableCell>

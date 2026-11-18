@@ -29,13 +29,13 @@ export default async function EntryPage({ params }: PageProps<"/freezone/entries
   const canSales = user.permissions.has("sales:invoice:read");
   const pct = entry.packages ? Math.min(100, Math.round((exported / entry.packages) * 100)) : 0;
   const cols: Column<(typeof allocations)[number]>[] = [
-    { key: "b", header: "Exit bill (BOE)", cell: ({ boeNo, exitId }) => user.permissions.has("freezone:exit:read") ? <Link href={`/freezone/exits/${exitId}`} className="font-mono text-xs text-primary hover:underline">{boeNo}</Link> : <span className="font-mono text-xs">{boeNo}</span> },
+    { key: "b", header: "Exit bill (BOE)", cell: ({ boeNo, exitId }) => user.permissions.has("freezone:exit:read") ? <Link href={`/freezone/exits/${exitId}`} className="font-mono text-[0.8125rem] text-primary hover:underline">{boeNo}</Link> : <span className="font-mono text-[0.8125rem]">{boeNo}</span> },
     { key: "d", header: "Exit date", className: "whitespace-nowrap", cell: ({ exitDate }) => formatSheetDate(exitDate) },
     { key: "t", header: "Type", cell: ({ billType }) => <Badge variant={billType === "EXPORT" ? "info" : "secondary"}>{billType}</Badge> },
     { key: "c", header: "Customer", cell: ({ customer, importer }) => customer ?? importer },
     { key: "p", header: "Packages taken", align: "right", cell: ({ a, exitPackages }) => <>{n(a.packages)}<span className="text-xs text-muted-foreground"> of {n(exitPackages)}</span></> },
     { key: "i", header: "Invoiced", align: "right", cell: ({ invoicedPkgs, billType, exitPackages }) => billType !== "EXPORT" ? <span className="text-muted-foreground">n/a</span> : invoicedPkgs === 0 ? <Badge variant="warning">Not invoiced</Badge> : invoicedPkgs >= exitPackages ? <Badge variant="success">Invoiced</Badge> : <Badge variant="info">{n(invoicedPkgs)}/{n(exitPackages)}</Badge> },
-    { key: "v", header: "Invoice / Sale", cell: ({ invoices }) => invoices.length ? <span className="flex flex-col gap-0.5 font-mono text-xs">{invoices.map((v) => canSales ? <span key={v.invoiceId}><Link href={`/sales/invoices/${v.invoiceId}`} className="text-primary hover:underline">{v.number}</Link> <span className="text-muted-foreground">· <Link href={`/sales/${v.saleId}`} className="hover:underline">{v.saleRef}</Link></span></span> : <span key={v.invoiceId}>{v.number}</span>)}</span> : "" },
+    { key: "v", header: "Invoice / Sale", cell: ({ invoices }) => invoices.length ? <span className="flex flex-col gap-0.5 font-mono text-[0.8125rem]">{invoices.map((v) => canSales ? <span key={v.invoiceId}><Link href={`/sales/invoices/${v.invoiceId}`} className="text-primary hover:underline">{v.number}</Link> <span className="text-muted-foreground">· <Link href={`/sales/${v.saleId}`} className="hover:underline">{v.saleRef}</Link></span></span> : <span key={v.invoiceId}>{v.number}</span>)}</span> : "" },
   ];
   return (
     <div className="max-w-5xl flex flex-col gap-6">

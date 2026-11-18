@@ -33,7 +33,7 @@ export default async function InvoicesPage({ searchParams }: PageProps<"/sales/i
   const keep = { ...params, size: String(res.size) };
   const qs = new URLSearchParams(Object.entries(params).filter(([k, v]) => v && k !== "size") as [string, string][]).toString();
   const cols: Column<(typeof res.rows)[number]>[] = [
-    { key: "n", header: "Invoice", cell: ({ inv }) => <Link href={`/sales/invoices/${inv.id}`} className="font-mono text-xs text-primary hover:underline">{inv.number}</Link> },
+    { key: "n", header: "Invoice", cell: ({ inv }) => <Link href={`/sales/invoices/${inv.id}`} className="font-mono text-[0.8125rem] text-primary hover:underline">{inv.number}</Link> },
     { key: "d", header: "Date", className: "whitespace-nowrap", cell: ({ inv }) => formatSheetDate(inv.issueDate) },
     { key: "c", header: "Customer", cell: (r) => <>{r.customer}<div className="text-xs text-muted-foreground">{r.saleRef}</div></> },
     { key: "due", header: "Due", className: "whitespace-nowrap", cell: ({ inv }) => formatSheetDate(inv.dueDate) },

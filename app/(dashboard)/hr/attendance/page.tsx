@@ -45,7 +45,7 @@ export default async function AttendancePage({ searchParams }: PageProps<"/hr/at
                   const def = r.record?.status ?? (r.dayType === "working" ? "present" : "");
                   return (
                     <TableRow key={r.id} className="border-b border-border last:border-0">
-                      <TableCell className="p-3"><span className="font-mono text-xs text-muted-foreground">{r.empCode}</span> {r.name}</TableCell>
+                      <TableCell className="p-3"><span className="font-mono text-[0.8125rem] text-muted-foreground">{r.empCode}</span> {r.name}</TableCell>
                       <TableCell className="p-3 text-xs">{r.dayType === "holiday" ? <span className="text-amber-600">Holiday · {r.holidayName}</span> : r.dayType === "weekly_off" ? <span className="text-muted-foreground">Weekly off</span> : "Working"}</TableCell>
                       <TableCell className="p-3 text-xs text-muted-foreground">{r.shift ? `${r.shift.startTime.slice(0, 5)}–${r.shift.endTime.slice(0, 5)}` : "—"}</TableCell>
                       {leave ? <TableCell className="p-3" colSpan={4}>{r.record!.status === "half_day" ? "Half-day leave" : "On leave"} <span className="text-muted-foreground">({r.record!.note})</span></TableCell> : (

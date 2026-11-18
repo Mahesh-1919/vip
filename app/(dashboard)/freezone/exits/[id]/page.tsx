@@ -35,7 +35,7 @@ export default async function ExitPage({ params }: PageProps<"/freezone/exits/[i
   const isExport = exit.billType === "EXPORT";
 
   const allocCols: Column<(typeof allocations)[number]>[] = [
-    { key: "e", header: "Entry bill", cell: ({ billNo, entryId }) => <Link href={`/freezone/entries/${entryId}`} className="font-mono text-xs text-primary hover:underline">{billNo}</Link> },
+    { key: "e", header: "Entry bill", cell: ({ billNo, entryId }) => <Link href={`/freezone/entries/${entryId}`} className="font-mono text-[0.8125rem] text-primary hover:underline">{billNo}</Link> },
     { key: "d", header: "Entry date", cell: ({ billDate }) => formatSheetDate(billDate) },
     { key: "a", header: "Agent", cell: ({ agent }) => agent },
     { key: "p", header: "Packages taken", align: "right", cell: ({ a, entryPackages }) => <>{n(a.packages)} <span className="text-xs text-muted-foreground">of {n(entryPackages)}</span></> },
@@ -43,7 +43,7 @@ export default async function ExitPage({ params }: PageProps<"/freezone/exits/[i
     ...(canWrite && !invoiced ? [{ key: "x", header: "", cell: ({ a }: { a: { id: string } }) => <form action={removeAllocationAction}><input type="hidden" name="id" value={a.id} /><Button size="sm" variant="ghost" type="submit">Remove</Button></form> }] : []),
   ];
   const billCols: Column<(typeof billing)[number]>[] = [
-    { key: "i", header: "Invoice", cell: ({ number, invoiceId }) => user.permissions.has("sales:invoice:read") ? <Link href={`/sales/invoices/${invoiceId}`} className="font-mono text-xs text-primary hover:underline">{number}</Link> : <span className="font-mono text-xs">{number}</span> },
+    { key: "i", header: "Invoice", cell: ({ number, invoiceId }) => user.permissions.has("sales:invoice:read") ? <Link href={`/sales/invoices/${invoiceId}`} className="font-mono text-[0.8125rem] text-primary hover:underline">{number}</Link> : <span className="font-mono text-[0.8125rem]">{number}</span> },
     { key: "d", header: "Date", cell: ({ issueDate }) => formatSheetDate(issueDate) },
     { key: "q", header: "Packages", align: "right", cell: ({ qty }) => n(qty) },
     { key: "v", header: "Value (AED)", align: "right", cell: ({ net }) => n(net, 2) },

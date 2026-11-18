@@ -37,7 +37,7 @@ export default async function SummaryPage({ searchParams }: PageProps<"/hr/atten
           <TableBody>
             {rows.map((r) => (
               <TableRow key={r.id} className="border-b border-border last:border-0">
-                <TableCell className="p-3"><Link className="text-primary hover:underline" href={`/hr/attendance/calendar?employee=${r.id}&month=${month}`}>{r.name}</Link> <span className="font-mono text-xs text-muted-foreground">{r.empCode}</span></TableCell>
+                <TableCell className="p-3"><Link className="text-primary hover:underline" href={`/hr/attendance/calendar?employee=${r.id}&month=${month}`}>{r.name}</Link> <span className="font-mono text-[0.8125rem] text-muted-foreground">{r.empCode}</span></TableCell>
                 <TableCell className="p-3 text-right">{r.workingDays}</TableCell><TableCell className="p-3 text-right">{r.present}</TableCell><TableCell className="p-3 text-right">{r.late}</TableCell>
                 <TableCell className="p-3 text-right">{r.halfDay}</TableCell><TableCell className="p-3 text-right">{r.absent}</TableCell><TableCell className="p-3 text-right">{r.onLeave}</TableCell>
                 <TableCell className={`p-3 text-right ${r.unmarked ? "text-amber-600 font-medium" : ""}`}>{r.unmarked}</TableCell>

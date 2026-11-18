@@ -57,14 +57,14 @@ export default async function NewExitInvoicePage({ searchParams }: PageProps<"/s
                     <TableBody>
                       {exits.map((x) => (
                         <TableRow key={x.e.id} className={x.e.id === focus ? "bg-primary/5" : ""}>
-                          <TableCell className="px-3"><Link href={`/freezone/exits/${x.e.id}`} className="font-mono text-xs text-primary hover:underline">{x.e.boeNo}</Link>{x.e.truckContainerNo && <div className="max-w-52 truncate font-mono text-[11px] text-muted-foreground">{x.e.truckContainerNo}</div>}</TableCell>
+                          <TableCell className="px-3"><Link href={`/freezone/exits/${x.e.id}`} className="font-mono text-[0.8125rem] text-primary hover:underline">{x.e.boeNo}</Link>{x.e.truckContainerNo && <div className="max-w-52 truncate font-mono text-xs text-muted-foreground">{x.e.truckContainerNo}</div>}</TableCell>
                           <TableCell className="px-3 whitespace-nowrap">{formatSheetDate(x.e.exitDate)}</TableCell>
                           <TableCell className="px-3">{x.e.portOfDischarge}</TableCell>
                           <TableCell className="px-3 text-right">{n(x.e.valueAed)}</TableCell>
                           <TableCell className="px-3 text-right">{n(x.e.packages)}</TableCell>
                           <TableCell className="px-3 text-right">{x.allocated >= x.e.packages ? <Badge variant="success">{n(x.allocated)}</Badge> : x.allocated > 0 ? <Badge variant="warning">{n(x.allocated)} of {n(x.e.packages)}</Badge> : <Badge variant="danger">Not linked</Badge>}</TableCell>
                           <TableCell className="px-3 text-right">{Number(x.billedPkgs) ? <Badge variant="info">{n(x.billedPkgs)} · {formatAED(x.billedValue)}</Badge> : <span className="text-muted-foreground">—</span>}</TableCell>
-                          <TableCell className="px-3 text-right"><Input name={`pk:${x.e.id}`} inputMode="numeric" disabled={x.invoiceablePkgs === 0} defaultValue={x.invoiceablePkgs === 0 ? "" : focus ? (x.e.id === focus ? x.invoiceablePkgs : "") : x.invoiceablePkgs} className="ml-auto w-24 text-right" aria-label={`Packages to invoice for ${x.e.boeNo}`} /><div className="mt-0.5 text-[11px] text-muted-foreground">{x.invoiceablePkgs === 0 ? <Link href={`/freezone/exits/${x.e.id}`} className="text-warning hover:underline">link to stock first</Link> : `${n(x.invoiceablePkgs)} can be invoiced`}</div></TableCell>
+                          <TableCell className="px-3 text-right"><Input name={`pk:${x.e.id}`} inputMode="numeric" disabled={x.invoiceablePkgs === 0} defaultValue={x.invoiceablePkgs === 0 ? "" : focus ? (x.e.id === focus ? x.invoiceablePkgs : "") : x.invoiceablePkgs} className="ml-auto w-24 text-right" aria-label={`Packages to invoice for ${x.e.boeNo}`} /><div className="mt-0.5 text-xs text-muted-foreground">{x.invoiceablePkgs === 0 ? <Link href={`/freezone/exits/${x.e.id}`} className="text-warning hover:underline">link to stock first</Link> : `${n(x.invoiceablePkgs)} can be invoiced`}</div></TableCell>
                         </TableRow>
                       ))}
                     </TableBody>

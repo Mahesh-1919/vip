@@ -62,7 +62,7 @@ export default async function EmployeesPage({ searchParams }: PageProps<"/hr/emp
 
       <Card className="gap-0 overflow-hidden py-0">
         <Table>
-          <TableHeader className="bg-muted/60 [&_th]:whitespace-nowrap [&_th]:text-[11px] [&_th]:font-semibold [&_th]:uppercase [&_th]:tracking-wider [&_th]:text-muted-foreground">
+          <TableHeader className="bg-muted/60 [&_th]:whitespace-nowrap [&_th]:text-xs [&_th]:font-semibold [&_th]:uppercase [&_th]:tracking-wider [&_th]:text-muted-foreground">
             <TableRow>
               <TableHead className="px-3">Picture</TableHead><TableHead className="px-3">Employee ID</TableHead><TableHead className="px-3">Full Name</TableHead>
               <TableHead className="px-3">Passport No.</TableHead><TableHead className="px-3">Passport Details</TableHead><TableHead className="px-3">Designation</TableHead>
@@ -73,9 +73,9 @@ export default async function EmployeesPage({ searchParams }: PageProps<"/hr/emp
             {res.rows.map((r) => (
               <TableRow key={r.id}>
                 <TableCell className="px-3 py-2 w-16"><EmployeeAvatar id={r.id} name={r.name} hasPhoto={!!r.photoKey} className="size-11" /></TableCell>
-                <TableCell className="px-3 font-mono text-xs">{r.empCode}</TableCell>
+                <TableCell className="px-3 font-mono text-[0.8125rem]">{r.empCode}</TableCell>
                 <TableCell className="min-w-44 px-3 whitespace-normal"><Link href={`/hr/employees/${r.id}`} className="font-medium uppercase text-primary hover:underline">{r.name}</Link>{r.department && <div className="text-xs normal-case text-muted-foreground">{r.department}</div>}</TableCell>
-                <TableCell className="px-3 font-mono text-xs uppercase whitespace-nowrap">{r.passportNo ?? "—"}</TableCell>
+                <TableCell className="px-3 font-mono text-[0.8125rem] uppercase whitespace-nowrap">{r.passportNo ?? "—"}</TableCell>
                 <TableCell className="px-3"><DatePair issue={r.passportIssueDate} expiry={r.passportExpiry} /></TableCell>
                 <TableCell className="px-3">{r.designation ?? "—"}</TableCell>
                 <TableCell className="px-3"><StatusBadge status={r.status} /></TableCell>

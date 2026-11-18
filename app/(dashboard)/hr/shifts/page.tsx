@@ -71,7 +71,7 @@ export default async function ShiftsPage() {
             </ActionForm>
           )}
           <Table className="w-full text-sm"><TableHeader className="text-left text-muted-foreground border-b border-border"><TableRow><TableHead className="py-2">Employee</TableHead><TableHead>Current shift</TableHead><TableHead>Since</TableHead></TableRow></TableHeader>
-            <TableBody>{current.map((c) => <TableRow key={c.code} className="border-b border-border last:border-0"><TableCell className="py-2">{c.name} <span className="font-mono text-xs text-muted-foreground">{c.code}</span></TableCell><TableCell>{c.shift}</TableCell><TableCell>{formatDate(c.from)}</TableCell></TableRow>)}</TableBody></Table>
+            <TableBody>{current.map((c) => <TableRow key={c.code} className="border-b border-border last:border-0"><TableCell className="py-2">{c.name} <span className="font-mono text-[0.8125rem] text-muted-foreground">{c.code}</span></TableCell><TableCell>{c.shift}</TableCell><TableCell>{formatDate(c.from)}</TableCell></TableRow>)}</TableBody></Table>
         </CardContent>
       </Card>
     </div>

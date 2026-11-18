@@ -59,7 +59,7 @@ export function PaymentsChart({ data }: { data: { key: string; label: string; va
             </Pie>
           </PieChart>
         </ChartContainer>
-        <div className="pointer-events-none absolute inset-0 grid place-items-center text-center"><div><div className="text-xl font-semibold">{total ? Math.round((data[0].value / total) * 100) : 0}%</div><div className="text-[11px] text-muted-foreground">collected</div></div></div>
+        <div className="pointer-events-none absolute inset-0 grid place-items-center text-center"><div><div className="text-xl font-semibold">{total ? Math.round((data[0].value / total) * 100) : 0}%</div><div className="text-xs text-muted-foreground">collected</div></div></div>
       </div>
       <ul className="grid w-full gap-1.5 text-sm">
         {data.map((d) => <li key={d.key} className="flex items-center justify-between"><span className="flex items-center gap-2"><span className="size-2.5 rounded-full" style={{ background: PAY_COLORS[d.key] }} />{d.label}</span><span className="tabular-nums font-medium">{aed(d.value)}</span></li>)}

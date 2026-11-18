@@ -41,7 +41,7 @@ export function DataTable<T>({ columns, rows, rowKey, empty, sort, className, de
         <TableHeader className={cn("bg-muted", scroll && "sticky top-0 z-10 shadow-[0_1px_0_var(--border)]")}>
           <TableRow>
             {columns.map((c) => (
-              <TableHead key={c.key} className={cn(dense ? "px-3" : "px-4", "whitespace-nowrap bg-muted text-[11px] font-semibold uppercase tracking-wider text-muted-foreground", align(c.align), c.headClassName)}>
+              <TableHead key={c.key} className={cn(dense ? "px-3" : "px-4", "whitespace-nowrap bg-muted text-xs font-semibold uppercase tracking-wide text-muted-foreground", align(c.align), c.headClassName)}>
                 {c.sortKey && sort ? (
                   <Link href={sort.href(c.sortKey, sort.key === c.sortKey && sort.dir !== "desc" ? "desc" : "asc")} className="hover:text-foreground">
                     {c.header}{sort.key === c.sortKey ? (sort.dir === "desc" ? " ↓" : " ↑") : ""}
@@ -54,7 +54,7 @@ export function DataTable<T>({ columns, rows, rowKey, empty, sort, className, de
         <TableBody>
           {rows.map((r) => (
             <TableRow key={rowKey(r)}>
-              {columns.map((c) => <TableCell key={c.key} className={cn(dense ? "px-3 py-1.5 text-[13px]" : "px-4 py-3", align(c.align), c.className)}>{c.cell(r)}</TableCell>)}
+              {columns.map((c) => <TableCell key={c.key} className={cn(dense ? "px-3 py-2 text-[0.9rem]" : "px-4 py-3.5", align(c.align), c.className)}>{c.cell(r)}</TableCell>)}
             </TableRow>
           ))}
           {!rows.length && (
@@ -62,7 +62,7 @@ export function DataTable<T>({ columns, rows, rowKey, empty, sort, className, de
           )}
         </TableBody>
         {footer && rows.length > 0 && (
-          <TableFooter><TableRow>{columns.map((c) => <TableCell key={c.key} className={cn(dense ? "px-3 py-1.5" : "px-4 py-3", "font-semibold", align(c.align))}>{footer[c.key] ?? ""}</TableCell>)}</TableRow></TableFooter>
+          <TableFooter><TableRow>{columns.map((c) => <TableCell key={c.key} className={cn(dense ? "px-3 py-2" : "px-4 py-3.5", "font-semibold", align(c.align))}>{footer[c.key] ?? ""}</TableCell>)}</TableRow></TableFooter>
         )}
       </Table>
     </Card>

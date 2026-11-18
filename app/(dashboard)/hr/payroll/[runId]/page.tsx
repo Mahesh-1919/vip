@@ -51,7 +51,7 @@ export default async function RunPage({ params }: PageProps<"/hr/payroll/[runId]
           <TableBody>
             {items.map((i) => (
               <TableRow key={i.id} className="border-b border-border last:border-0 align-top">
-                <TableCell className="p-3"><Link className="text-primary hover:underline" href={`/hr/payroll/${run.id}/${i.id}`}>{i.employeeName}</Link> <span className="font-mono text-xs text-muted-foreground">{i.empCode}</span>
+                <TableCell className="p-3"><Link className="text-primary hover:underline" href={`/hr/payroll/${run.id}/${i.id}`}>{i.employeeName}</Link> <span className="font-mono text-[0.8125rem] text-muted-foreground">{i.empCode}</span>
                   {i.warnings.map((w) => <div key={w} className="text-xs text-amber-600">⚠ {w}</div>)}</TableCell>
                 <TableCell className="p-3 text-right">{Number(i.paidDays)}/{i.basisDays}</TableCell>
                 <TableCell className="p-3 text-right">{formatAED(i.gross)}</TableCell><TableCell className="p-3 text-right">{formatAED(i.totalDeductions)}</TableCell><TableCell className="p-3 text-right font-medium">{formatAED(i.net)}</TableCell>

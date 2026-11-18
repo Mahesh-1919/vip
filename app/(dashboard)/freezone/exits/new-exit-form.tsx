@@ -37,7 +37,7 @@ export function NewExitForm({ entries, customers }: { entries: StockEntry[]; cus
           <div><div className="text-xs text-muted-foreground">Available stock</div><div className="text-2xl font-semibold text-primary">{n(entry.remaining)} <span className="text-sm font-normal text-muted-foreground">packages</span></div></div>
           <div><div className="text-xs text-muted-foreground">Imported</div><div className="text-lg font-semibold">{n(entry.packages)}</div><div className="text-xs text-muted-foreground">{n(entry.packages - entry.remaining)} already exported</div></div>
           <div><div className="text-xs text-muted-foreground">Arrived</div><div className="text-sm font-medium">{shortDate(entry.billDate)}</div><div className="text-xs text-muted-foreground">{entry.agent ?? "—"}</div></div>
-          <div><div className="text-xs text-muted-foreground">Containers</div><div className="break-words font-mono text-xs">{entry.marks || "—"}</div>{entry.origin && <Badge variant="secondary" className="mt-1">{entry.origin}</Badge>}</div>
+          <div><div className="text-xs text-muted-foreground">Containers</div><div className="break-words font-mono text-[0.8125rem]">{entry.marks || "—"}</div>{entry.origin && <Badge variant="secondary" className="mt-1">{entry.origin}</Badge>}</div>
         </div>
       )}
 

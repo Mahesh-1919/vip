@@ -37,7 +37,7 @@ export default async function InvoicePage({ params }: PageProps<"/sales/invoices
     { key: "t", header: "Total", align: "right", cell: (l) => n(l.total) },
   ];
   const payCols: Column<(typeof payments)[number]>[] = [
-    { key: "r", header: "Ref", cell: (p) => <span className="font-mono text-xs">{p.ref}</span> },
+    { key: "r", header: "Ref", cell: (p) => <span className="font-mono text-[0.8125rem]">{p.ref}</span> },
     { key: "d", header: "Date", cell: (p) => formatDate(p.paymentDate) },
     { key: "m", header: "Method", cell: (p) => <span className="capitalize">{p.method.replace("_", " ")}</span> },
     { key: "a", header: "Amount", align: "right", cell: (p) => n(p.amount) },

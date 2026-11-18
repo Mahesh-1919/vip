@@ -120,7 +120,7 @@ export default async function DashboardPage() {
         {!flow && invs && (
           <div>
             <ListCard title="Latest invoices" href="/sales/invoices">
-              {invs.length ? invs.map((i) => <Row key={i.id} href={`/sales/invoices/${i.id}`}><span><span className="font-mono text-xs">{i.number}</span> <span className="text-muted-foreground">· {i.customer}</span></span><span className="flex items-center gap-3"><span>{formatAED(i.total)}</span><StatusBadge status={stateOf({ total: i.total, paidAmount: i.paid, dueDate: i.due })} /></span></Row>) : <Empty text="No invoices yet." />}
+              {invs.length ? invs.map((i) => <Row key={i.id} href={`/sales/invoices/${i.id}`}><span><span className="font-mono text-[0.8125rem]">{i.number}</span> <span className="text-muted-foreground">· {i.customer}</span></span><span className="flex items-center gap-3"><span>{formatAED(i.total)}</span><StatusBadge status={stateOf({ total: i.total, paidAmount: i.paid, dueDate: i.due })} /></span></Row>) : <Empty text="No invoices yet." />}
             </ListCard>
           </div>
         )}
@@ -129,10 +129,10 @@ export default async function DashboardPage() {
       {(entries || exits) && (
         <div className="grid gap-6 lg:grid-cols-2">
           {entries && <ListCard title="Latest entry bills" description="Goods arriving in the zone" href="/freezone/entries">
-            {entries.length ? entries.map((e) => <Row key={e.id} href={`/freezone/entries/${e.id}`}><span className="min-w-0"><span className="font-mono text-xs">{e.billNo}</span><span className="block truncate text-xs text-muted-foreground">{e.agent ?? "—"} · {formatSheetDate(e.date)}</span></span><span className="shrink-0 text-right"><b>{n(e.packages)}</b> <span className="text-xs text-muted-foreground">pkgs{e.origin ? ` · ${e.origin}` : ""}</span></span></Row>) : <Empty text="No entry bills yet." />}
+            {entries.length ? entries.map((e) => <Row key={e.id} href={`/freezone/entries/${e.id}`}><span className="min-w-0"><span className="font-mono text-[0.8125rem]">{e.billNo}</span><span className="block truncate text-xs text-muted-foreground">{e.agent ?? "—"} · {formatSheetDate(e.date)}</span></span><span className="shrink-0 text-right"><b>{n(e.packages)}</b> <span className="text-xs text-muted-foreground">pkgs{e.origin ? ` · ${e.origin}` : ""}</span></span></Row>) : <Empty text="No entry bills yet." />}
           </ListCard>}
           {exits && <ListCard title="Latest exit bills" description="Goods leaving the zone" href="/freezone/exits">
-            {exits.length ? exits.map((e) => <Row key={e.id} href={`/freezone/exits/${e.id}`}><span className="min-w-0"><span className="font-mono text-xs">{e.boeNo}</span><span className="block truncate text-xs text-muted-foreground">{e.importer ?? "—"} · {formatSheetDate(e.date)}</span></span><span className="flex shrink-0 items-center gap-3"><span><b>{n(e.packages)}</b> <span className="text-xs text-muted-foreground">pkgs</span></span><Badge variant={e.type === "EXPORT" ? "info" : "secondary"}>{e.type}</Badge></span></Row>) : <Empty text="No exit bills yet." />}
+            {exits.length ? exits.map((e) => <Row key={e.id} href={`/freezone/exits/${e.id}`}><span className="min-w-0"><span className="font-mono text-[0.8125rem]">{e.boeNo}</span><span className="block truncate text-xs text-muted-foreground">{e.importer ?? "—"} · {formatSheetDate(e.date)}</span></span><span className="flex shrink-0 items-center gap-3"><span><b>{n(e.packages)}</b> <span className="text-xs text-muted-foreground">pkgs</span></span><Badge variant={e.type === "EXPORT" ? "info" : "secondary"}>{e.type}</Badge></span></Row>) : <Empty text="No exit bills yet." />}
           </ListCard>}
         </div>
       )}
@@ -140,7 +140,7 @@ export default async function DashboardPage() {
       {((invs && flow) || docs) && (
         <div className="grid gap-6 lg:grid-cols-2">
           {invs && flow && <ListCard title="Latest invoices" href="/sales/invoices">
-            {invs.length ? invs.map((i) => <Row key={i.id} href={`/sales/invoices/${i.id}`}><span className="min-w-0"><span className="font-mono text-xs">{i.number}</span><span className="block truncate text-xs text-muted-foreground">{i.customer} · {formatSheetDate(i.date)}</span></span><span className="flex shrink-0 items-center gap-3"><span>{formatAED(i.total)}</span><StatusBadge status={stateOf({ total: i.total, paidAmount: i.paid, dueDate: i.due })} /></span></Row>) : <Empty text="No invoices yet." />}
+            {invs.length ? invs.map((i) => <Row key={i.id} href={`/sales/invoices/${i.id}`}><span className="min-w-0"><span className="font-mono text-[0.8125rem]">{i.number}</span><span className="block truncate text-xs text-muted-foreground">{i.customer} · {formatSheetDate(i.date)}</span></span><span className="flex shrink-0 items-center gap-3"><span>{formatAED(i.total)}</span><StatusBadge status={stateOf({ total: i.total, paidAmount: i.paid, dueDate: i.due })} /></span></Row>) : <Empty text="No invoices yet." />}
           </ListCard>}
           {docs && <ListCard title="Documents expiring soon" description="Passports, visas and cards: expired or due within 90 days" href="/hr/employees">
             {docs.length ? docs.map((x, i) => <Row key={i} href={`/hr/employees/${x.id}`}><span className="min-w-0"><span className="block truncate font-medium">{x.name}</span><span className="text-xs text-muted-foreground">{x.doc}</span></span><Badge variant={(x.days ?? 0) < 0 ? "danger" : "warning"}>{(x.days ?? 0) < 0 ? `Expired ${Math.abs(x.days ?? 0)}d ago` : `${x.days}d left`}</Badge></Row>) : <Empty text="No documents expiring in the next 90 days." />}

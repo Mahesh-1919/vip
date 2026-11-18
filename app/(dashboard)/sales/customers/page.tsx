@@ -33,7 +33,7 @@ export default async function CustomersPage({ searchParams }: PageProps<"/sales/
   const cols: Column<(typeof rows)[number]>[] = [
     { key: "n", header: "Name", cell: (r) => <Link href={`/sales/customers/${r.id}`} className="font-medium text-primary hover:underline">{r.name}</Link> },
     { key: "c", header: "Contact", cell: (r) => <>{r.contactName ?? "—"}<div className="text-xs text-muted-foreground">{r.phone}</div></> },
-    { key: "t", header: "TRN", cell: (r) => <span className="font-mono text-xs">{r.trn ?? "—"}</span> },
+    { key: "t", header: "TRN", cell: (r) => <span className="font-mono text-[0.8125rem]">{r.trn ?? "—"}</span> },
     { key: "d", header: "Credit days", align: "right", cell: (r) => r.creditDays },
     { key: "s", header: "Status", cell: (r) => <StatusBadge status={r.isActive ? "active" : "inactive"} /> },
   ];

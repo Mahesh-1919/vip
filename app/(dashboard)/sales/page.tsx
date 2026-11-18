@@ -39,13 +39,13 @@ export default async function SalesPage({ searchParams }: PageProps<"/sales">) {
   const keep = { ...params, size: String(res.size) };
   const qs = new URLSearchParams(Object.entries(params).filter(([k, v]) => v && k !== "size") as [string, string][]).toString();
   const cols: Column<(typeof res.rows)[number]>[] = [
-    { key: "ref", header: "Ref", cell: ({ s }) => <Link href={`/sales/${s.id}`} className="font-mono text-xs text-primary hover:underline">{s.ref}</Link> },
+    { key: "ref", header: "Ref", cell: ({ s }) => <Link href={`/sales/${s.id}`} className="font-mono text-[0.8125rem] text-primary hover:underline">{s.ref}</Link> },
     { key: "d", header: "Date", className: "whitespace-nowrap", cell: ({ s }) => formatSheetDate(s.saleDate) },
     { key: "c", header: "Customer", cell: (r) => r.customer },
-    { key: "b", header: "Bill ref", className: "font-mono text-xs", cell: ({ s }) => s.billRef },
+    { key: "b", header: "Bill ref", className: "font-mono text-[0.8125rem]", cell: ({ s }) => s.billRef },
     { key: "n", header: "Net (AED)", align: "right", cell: (r) => aed(r.net) },
     { key: "t", header: "Total incl. VAT", align: "right", cell: (r) => aed(r.total) },
-    { key: "i", header: "Invoice", cell: (r) => r.invoiceId ? <Link href={`/sales/invoices/${r.invoiceId}`} className="font-mono text-xs text-primary hover:underline">{r.invoiceNo}</Link> : <Badge variant="warning">Not invoiced</Badge> },
+    { key: "i", header: "Invoice", cell: (r) => r.invoiceId ? <Link href={`/sales/invoices/${r.invoiceId}`} className="font-mono text-[0.8125rem] text-primary hover:underline">{r.invoiceNo}</Link> : <Badge variant="warning">Not invoiced</Badge> },
   ];
   return (
     <div className="flex flex-col gap-4">

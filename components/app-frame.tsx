@@ -54,7 +54,7 @@ export function AppFrame({ appName, companyName, sections, user, logout, childre
         <SidebarHeader>
           <SidebarMenu><SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
-              <Link href="/"><BrandLogo size={34} /><span className="grid min-w-0 leading-tight"><span className="truncate text-base font-semibold text-foreground">{appName}</span><span className="truncate text-[11px] font-normal text-sidebar-foreground/70">{companyName}</span></span></Link>
+              <Link href="/"><BrandLogo size={34} /><span className="grid min-w-0 leading-tight"><span className="truncate text-base font-semibold text-foreground">{appName}</span><span className="truncate text-xs font-normal text-sidebar-foreground/70">{companyName}</span></span></Link>
             </SidebarMenuButton>
           </SidebarMenuItem></SidebarMenu>
         </SidebarHeader>
@@ -63,7 +63,7 @@ export function AppFrame({ appName, companyName, sections, user, logout, childre
             <Collapsible key={s.title} defaultOpen className="group/collapsible">
               <SidebarGroup>
                 {s.title !== "Overview" && (
-                  <SidebarGroupLabel asChild className="text-[11px] font-semibold uppercase tracking-wider">
+                  <SidebarGroupLabel asChild className="text-xs font-semibold uppercase tracking-wider">
                     <CollapsibleTrigger>{s.title}<ChevronDown className="ml-auto size-3 transition-transform group-data-[state=closed]/collapsible:-rotate-90" /></CollapsibleTrigger>
                   </SidebarGroupLabel>
                 )}
